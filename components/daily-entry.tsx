@@ -12,6 +12,7 @@ interface DailyEntryProps {
   cycleDay?: number
   cycleTotalDays?: number
   onAnalyze?: () => void
+  onDebugAdvance?: () => void
 }
 
 export function DailyEntry({
@@ -21,6 +22,7 @@ export function DailyEntry({
   cycleDay = 4,
   cycleTotalDays = 7,
   onAnalyze,
+  onDebugAdvance,
 }: DailyEntryProps) {
   const [content, setContent] = useState(initialContent)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -81,6 +83,11 @@ export function DailyEntry({
               <h1 className="font-serif text-base md:text-lg text-foreground tracking-wide">{formattedDate}</h1>
               <div className="flex items-center gap-3">
                 <ProgressRing currentDay={cycleDay} totalDays={cycleTotalDays} />
+                {onDebugAdvance && (
+                    <button onClick={onDebugAdvance} className="text-muted-foreground/20 hover:text-foreground text-[10px] uppercase font-sans tracking-widest border border-border px-2 py-1 rounded-sm">
+                        +1 Day
+                    </button>
+                )}
               </div>
             </div>
           </div>
