@@ -9,7 +9,7 @@ const MODAL_ANALYZE_URL = process.env.MODAL_ANALYZE_URL;
 
 export const transcribeAudio = action({
   args: { audioUrl: v.string() },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     if (!MODAL_TRANSCRIBE_URL) throw new Error("Missing MODAL_TRANSCRIBE_URL");
     
     const response = await fetch(MODAL_TRANSCRIBE_URL, {
@@ -29,16 +29,15 @@ export const transcribeAudio = action({
 
 export const analyzeSession = action({
   args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<string> => {
     if (!MODAL_ANALYZE_URL) throw new Error("Missing MODAL_ANALYZE_URL");
 
     // Fetch session data
-    const session = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
+    const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
     if (!session) throw new Error("Session not found");
     
     // Fetch entries
-    // We assume the user calling this action is the owner, so entries.list works.
-    const entries = await ctx.runQuery(api.entries.list, {}); 
+    const entries: any = await ctx.runQuery(api.entries.list, {}); 
     
     if (!session.transcript) throw new Error("No transcript found");
     
