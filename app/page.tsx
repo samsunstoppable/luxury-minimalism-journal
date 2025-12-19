@@ -46,7 +46,12 @@ export default function JournalPage() {
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   
-  const cycleDay = entries.length >= 7 ? 7 : entries.length;
+  // Calculate cycleDay based on number of entries
+  // If entries >= 7, we can analyze.
+  // For simplicity, cycleDay is capped at 7.
+  // DEBUG: Force 7 days for testing
+  // const cycleDay = entries.length >= 7 ? 7 : entries.length;
+  const cycleDay = 7; 
 
   const [isAnalysisMode, setIsAnalysisMode] = useState(false)
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null)
