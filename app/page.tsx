@@ -45,13 +45,11 @@ export default function JournalPage() {
   const [isDailyMode, setIsDailyMode] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [debugDays, setDebugDays] = useState(0); // For testing advancement
   
-  // Calculate cycleDay based on number of entries
-  // If entries >= 7, we can analyze.
-  // For simplicity, cycleDay is capped at 7.
-  // DEBUG: Force 7 days for testing
-  // const cycleDay = entries.length >= 7 ? 7 : entries.length;
-  const cycleDay = 7; 
+  const realCycleDay = entries.length;
+  // Combine real entries + debug simulated days, capped at 7
+  const cycleDay = Math.min(realCycleDay + debugDays, 7);
 
   const [isAnalysisMode, setIsAnalysisMode] = useState(false)
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null)
@@ -126,12 +124,18 @@ export default function JournalPage() {
   }
 
   const handleSelectPersona = async (persona: Persona) => {
-    setSelectedPersona(persona);
-    const sid = await createSession({ personaId: persona.id });
-    // @ts-ignore
-    setSessionId(sid);
-    setIsAnalysisMode(false);
-    setIsVoiceMode(true);
+    try {
+      setSelectedPersona(persona);
+      const sid = await createSession({ personaId: persona.id });
+      // @ts-ignore
+      setSessionId(sid);
+      
+      setIsAnalysisMode(false);
+      setIsVoiceMode(true);
+      setIsChatMode(false);
+    } catch (error) {
+      console.error("Failed to start session:", error);
+    }
   }
 
   const handleVoiceComplete = async () => {
@@ -172,6 +176,7 @@ export default function JournalPage() {
         cycleDay={cycleDay}
         cycleTotalDays={7}
         onAnalyze={handleOpenAnalysis}
+        onDebugAdvance={() => setDebugDays(d => d + 1)}
       />
     )
   }

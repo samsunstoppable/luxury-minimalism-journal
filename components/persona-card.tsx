@@ -7,6 +7,7 @@ export interface Persona {
   name: string
   subtitle: string
   imageQuery: string
+  imageSrc?: string
 }
 
 interface PersonaCardProps {
@@ -34,7 +35,9 @@ export function PersonaCard({ persona, isSelected, onSelect }: PersonaCardProps)
           isSelected && "invert",
         )}
         style={{
-          backgroundImage: `url('/--encodeuricomponent-persona-imagequery--.jpg')`,
+          backgroundImage: persona.imageSrc 
+            ? `url('${persona.imageSrc}')`
+            : `url('/placeholder-user.jpg')`,
           filter: "grayscale(100%) contrast(1.2)",
         }}
       />

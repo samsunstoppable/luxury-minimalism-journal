@@ -32,7 +32,7 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [isRecording, setIsRecording] = useState(false)
   const [hasAnswered, setHasAnswered] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
+  // const [isProcessing, setIsProcessing] = useState(false) // Removed to prevent blocking UI
 
   const generateUploadUrl = useMutation(api.sessions.generateUploadUrl);
   const saveAudio = useMutation(api.sessions.saveAudio);
@@ -46,41 +46,7 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
   const isLastQuestion = currentQuestionIndex === INTROSPECTION_QUESTIONS.length - 1
   const progress = ((currentQuestionIndex + 1) / INTROSPECTION_QUESTIONS.length) * 100
 
-  const startRecording = async () => {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        chunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data.size > 0) chunksRef.current.push(e.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-            const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-            await handleUpload(blob);
-            // Cleanup stream
-            stream.getTracks().forEach(track => track.stop());
-        };
-
-        mediaRecorder.start();
-        setIsRecording(true);
-        setHasAnswered(false);
-    } catch (err) {
-        console.error("Microphone access denied", err);
-    }
-  }
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-    }
-  }
-
-  const handleUpload = async (blob: Blob) => {
-      setIsProcessing(true);
+  const processAudioInBackground = async (blob: Blob, questionText: string) => {
       try {
           const postUrl = await generateUploadUrl();
           
@@ -99,26 +65,63 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
           
           if (url) {
               const text = await transcribeAudio({ audioUrl: url });
-              const question = INTROSPECTION_QUESTIONS[currentQuestionIndex];
               // @ts-ignore
-              await appendTranscript({ sessionId, text: `Q: ${question}\nA: ${text}` });
-              setHasAnswered(true);
+              await appendTranscript({ sessionId, text: `Q: ${questionText}\nA: ${text}` });
           }
       } catch (error) {
-          console.error("Error processing audio", error);
-      } finally {
-          setIsProcessing(false);
+          console.error("Error processing audio in background", error);
       }
   }
 
+  const startRecording = async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        chunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) chunksRef.current.push(e.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+            const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+            
+            // Capture the current question context before advancing
+            const questionText = INTROSPECTION_QUESTIONS[currentQuestionIndex];
+            
+            // Start background processing
+            processAudioInBackground(blob, questionText);
+            
+            // Cleanup stream
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Automatically advance to next question
+            handleNext();
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+        setHasAnswered(false);
+    } catch (err) {
+        console.error("Microphone access denied", err);
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+    }
+  }
+
   const handleMicPress = useCallback(() => {
-    if (isProcessing) return;
     if (!isRecording) {
       startRecording();
     } else {
       stopRecording();
     }
-  }, [isRecording, isProcessing]);
+  }, [isRecording, currentQuestionIndex]); // Added currentQuestionIndex to dep array just in case, though ref is used
 
   const handleNext = useCallback(() => {
     if (isLastQuestion) {
@@ -192,7 +195,7 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
           transition={{ duration: 0.3 }}
           className="mt-12 font-sans text-xs text-white tracking-wider uppercase"
         >
-          {isProcessing ? "Transcribing..." : hasAnswered ? "Tap to re-record or continue" : "Hold to speak your truth"}
+          {hasAnswered ? "Tap to re-record or continue" : "Hold to speak your truth"}
         </motion.p>
       </main>
 
@@ -217,10 +220,9 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
             onClick={handleMicPress}
             className="relative flex items-center justify-center"
             whileTap={{ scale: 0.95 }}
-            disabled={isProcessing}
           >
             <AnimatePresence>
-              {!isRecording && !isProcessing && (
+              {!isRecording && (
                 <>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -241,18 +243,14 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
               transition={{ duration: 0.3 }}
               className="relative w-20 h-20 rounded-full flex items-center justify-center border border-white/30"
             >
-              {isProcessing ? (
-                  <Loader2 className="w-8 h-8 text-white animate-spin" />
-              ) : (
-                <Mic
+              <Mic
                   className={`w-8 h-8 transition-colors duration-300 ${isRecording ? "text-white" : "text-white/70"}`}
                 />
-              )}
             </motion.div>
           </motion.button>
 
           <AnimatePresence>
-            {hasAnswered && !isRecording && !isProcessing && (
+            {hasAnswered && !isRecording && (
               <motion.button
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

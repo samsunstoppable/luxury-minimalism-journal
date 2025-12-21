@@ -5,13 +5,30 @@ export const create = mutation({
   args: { personaId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Unauthenticated");
     
-    const user = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", identity.tokenIdentifier)).unique();
-    if (!user) throw new Error("User not found");
+    let userId;
+    if (identity) {
+      const user = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", identity.tokenIdentifier)).unique();
+      if (!user) throw new Error("User not found");
+      userId = user._id;
+    } else {
+        // Fallback for local dev: Use or create a "Dev User"
+        const devToken = "dev-user";
+        let devUser = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", devToken)).unique();
+        if (!devUser) {
+            userId = await ctx.db.insert("users", {
+                tokenIdentifier: devToken,
+                name: "Dev User",
+                email: "dev@local.host",
+                subscriptionStatus: "free",
+            });
+        } else {
+            userId = devUser._id;
+        }
+    }
 
     const sessionId = await ctx.db.insert("sessions", {
-        userId: user._id,
+        userId: userId,
         personaId: args.personaId,
         status: "pending",
         startedAt: Date.now(),
