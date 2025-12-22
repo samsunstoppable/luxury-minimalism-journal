@@ -30,11 +30,7 @@ export const get = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-       // Fallback for local dev
-        const devToken = "dev-user";
-        const devUser = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", devToken)).unique();
-        if (!devUser) return null;
-        return devUser;
+      return null;
     }
     return await ctx.db
       .query("users")
