@@ -7,6 +7,7 @@ import { AudioWaveform } from "./audio-waveform"
 import type { Persona } from "./persona-card"
 import { useMutation, useAction } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 const INTROSPECTION_QUESTIONS = [
   "What moment this week made you feel most alive?",
@@ -62,13 +63,17 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
           
           const { storageId } = await result.json();
           
-          // @ts-ignore
-          const url = await saveAudio({ sessionId, storageId });
+          const url = await saveAudio({ 
+            sessionId: sessionId as Id<"sessions">, 
+            storageId: storageId as Id<"_storage"> 
+          });
           
           if (url) {
               const text = await transcribeAudio({ audioUrl: url });
-              // @ts-ignore
-              await appendTranscript({ sessionId, text: `Q: ${questionText}\nA: ${text}` });
+              await appendTranscript({ 
+                sessionId: sessionId as Id<"sessions">, 
+                text: `Q: ${questionText}\nA: ${text}` 
+              });
           }
       } catch (error) {
           console.error("Error processing audio in background", error);

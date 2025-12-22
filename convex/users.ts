@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 
 export const getByToken = internalQuery({
   args: { token: v.string() },
@@ -8,6 +8,20 @@ export const getByToken = internalQuery({
       .query("users")
       .withIndex("by_token", (q) => q.eq("tokenIdentifier", args.token))
       .unique();
+  },
+});
+
+export const updateSubscription = internalMutation({
+  args: {
+    subscriptionId: v.string(),
+    status: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      subscriptionId: args.subscriptionId,
+      subscriptionStatus: args.status,
+    });
   },
 });
 

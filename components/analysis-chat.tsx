@@ -6,6 +6,7 @@ import { X, Send, ArrowUp } from "lucide-react"
 import type { Persona } from "./persona-card"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface AnalysisChatProps {
   persona: Persona
@@ -14,8 +15,8 @@ interface AnalysisChatProps {
 }
 
 export function AnalysisChat({ persona, sessionId, onClose }: AnalysisChatProps) {
-  const session = useQuery(api.sessions.get, { sessionId });
-  const messages = useQuery(api.messages.list, { sessionId }) || [];
+  const session = useQuery(api.sessions.get, { sessionId: sessionId as Id<"sessions"> });
+  const messages = useQuery(api.messages.list, { sessionId: sessionId as Id<"sessions"> }) || [];
   const sendMessage = useMutation(api.messages.send);
 
   const [inputValue, setInputValue] = useState("")
@@ -45,8 +46,7 @@ export function AnalysisChat({ persona, sessionId, onClose }: AnalysisChatProps)
     const content = inputValue
     setInputValue("")
 
-    // @ts-ignore
-    await sendMessage({ sessionId, content, role: "user" })
+    await sendMessage({ sessionId: sessionId as Id<"sessions">, content, role: "user" })
     
     // Future: Trigger AI reply
   }

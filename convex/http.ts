@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 const http = httpRouter();
 
@@ -16,7 +16,7 @@ http.route({
     }
 
     try {
-      await ctx.runAction(internal.polar.handleWebhook, {
+      await ctx.runAction(api.polar.handleWebhook, {
         payload,
         signature,
       });

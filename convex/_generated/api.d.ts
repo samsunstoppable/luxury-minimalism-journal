@@ -10,7 +10,9 @@
 
 import type * as actions from "../actions.js";
 import type * as entries from "../entries.js";
+import type * as http from "../http.js";
 import type * as messages from "../messages.js";
+import type * as polar from "../polar.js";
 import type * as sessions from "../sessions.js";
 import type * as users from "../users.js";
 
@@ -23,7 +25,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
   entries: typeof entries;
+  http: typeof http;
   messages: typeof messages;
+  polar: typeof polar;
   sessions: typeof sessions;
   users: typeof users;
 }>;
