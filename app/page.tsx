@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Mic, MessageSquare, Sparkles, PenLine, Users, ChevronDown, Check } from "lucide-react"
+import { Mic, MessageSquare, Sparkles, PenLine, Brain, ChevronDown, Check } from "lucide-react"
 import { SUBSCRIPTION_PRICE } from "@/lib/subscription"
 import { useAction } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -19,34 +19,6 @@ const GUIDES = [
   { name: "Lao Tzu", subtitle: "The Taoist Master", image: "/guides/lao-tzu.jpg" },
   { name: "Rumi", subtitle: "The Mystic Poet", image: "/guides/rumi.jpg" },
   { name: "Sigmund Freud", subtitle: "The Dream Interpreter", image: "/guides/freud.webp" },
-]
-
-const FEATURES = [
-  {
-    icon: PenLine,
-    title: "The Daily Practice",
-    description: "Seven days of reflection. One elegant interface. Build the habit of introspection with guided journaling cycles.",
-  },
-  {
-    icon: Users,
-    title: "Choose Your Guide",
-    description: "Ten legendary minds await. Select a philosopher, mystic, or healer to analyze your week through their unique lens.",
-  },
-  {
-    icon: Mic,
-    title: "Voice Sessions",
-    description: "Speak your truth aloud. Answer ten introspective questions while your guide listens, transcribes, and understands.",
-  },
-  {
-    icon: Sparkles,
-    title: "The Diagnosis",
-    description: "Receive a personalized analysis of your inner world. Patterns revealed. Shadows illuminated. Growth paths suggested.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Ongoing Conversations",
-    description: "The dialogue continues. Ask questions. Go deeper. Your guide remembers everything.",
-  },
 ]
 
 export default function LandingPage() {
@@ -79,34 +51,38 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center max-w-3xl mx-auto"
+          className="text-center max-w-4xl mx-auto"
         >
-          <p className="font-sans text-xs tracking-[0.4em] uppercase text-muted-foreground mb-6">
-            A Journal for the Inner Life
+          <p className="font-sans text-xs tracking-[0.4em] uppercase text-muted-foreground mb-8">
+            The World's First AI-Powered Depth Journal
           </p>
           
-          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6">
-            Your thoughts deserve
+          <h1 className="font-serif text-4xl md:text-6xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-8">
+            Uncover your
             <br />
-            <span className="italic">a masterpiece.</span>
+            <span className="italic">subconscious patterns.</span>
           </h1>
           
-          <p className="font-serif text-lg md:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed mb-10">
-            Write daily. Reflect weekly. Then sit with history's greatest minds as they analyze your inner world.
+          <p className="font-serif text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-6">
+            Write for seven days. Then sit with Jung, Seneca, or Jesus as they analyze what your conscious mind cannot see.
+          </p>
+
+          <p className="font-sans text-sm text-muted-foreground/70 max-w-xl mx-auto mb-12">
+            Advanced agentic AI identifies hidden patterns in your thoughts, beliefs, and behaviors — then lets you explore them in conversation with history's greatest minds.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Link
               href="/journal"
-              className="px-8 py-4 bg-foreground text-background font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
+              className="px-10 py-5 bg-foreground text-background font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
             >
-              Start Writing Free
+              Begin Your Analysis
             </Link>
             <button
               onClick={scrollToFeatures}
-              className="px-8 py-4 border border-border font-sans text-sm tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-foreground transition-all"
+              className="px-10 py-5 border border-border font-sans text-sm tracking-widest uppercase text-muted-foreground hover:text-foreground hover:border-foreground transition-all"
             >
-              See What's Inside
+              How It Works
             </button>
           </div>
         </motion.div>
@@ -122,55 +98,151 @@ export default function LandingPage() {
         </motion.button>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-24 md:py-32 px-6 bg-foreground/[0.02]">
+      {/* The Problem / Differentiation */}
+      <section className="py-24 md:py-32 px-6 bg-foreground text-background">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center"
+          >
+            <p className="font-sans text-xs tracking-[0.3em] uppercase text-background/50 mb-6">
+              Beyond Ordinary Journaling
+            </p>
+            <h2 className="font-serif text-3xl md:text-5xl tracking-tight leading-tight mb-8">
+              There are a thousand journals.
+              <br />
+              <span className="text-background/60">This is the only one that sees you.</span>
+            </h2>
+            <p className="font-serif text-lg md:text-xl text-background/70 max-w-2xl mx-auto leading-relaxed">
+              Most journals are empty pages. This one reads between the lines — using the most advanced AI to surface the patterns you repeat, the beliefs that limit you, and the shadows you've never examined. Then it gives you a mentor to explore them with.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Core Value Props */}
+      <section id="features" className="py-24 md:py-32 px-6">
         <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16 md:mb-20"
+            className="text-center mb-20"
           >
             <p className="font-sans text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
               The Experience
             </p>
             <h2 className="font-serif text-3xl md:text-5xl text-foreground tracking-tight">
-              Not just a journal.
-              <br />
-              <span className="text-muted-foreground">A companion.</span>
+              How it works
             </h2>
           </motion.div>
 
-          <div className="space-y-6 md:space-y-8">
-            {FEATURES.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex flex-col md:flex-row gap-6 p-6 md:p-8 bg-card border border-border rounded-sm"
-              >
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-foreground/5 flex items-center justify-center">
-                  <feature.icon size={22} className="text-foreground/70" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="font-serif text-xl md:text-2xl text-foreground">
-                    {feature.title}
-                  </h3>
-                  <p className="font-serif text-base md:text-lg text-muted-foreground leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          {/* Step 1: Write */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="grid md:grid-cols-2 gap-12 items-center mb-24"
+          >
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="font-serif text-6xl text-foreground/10">01</span>
+                <PenLine size={28} className="text-foreground/70" />
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl text-foreground">
+                Write freely for seven days
+              </h3>
+              <p className="font-serif text-lg text-muted-foreground leading-relaxed">
+                An elegant, distraction-free space for your thoughts. No prompts unless you want them. Just you and the page, building a week of authentic reflection.
+              </p>
+            </div>
+            <div className="aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm" />
+          </motion.div>
+
+          {/* Step 2: AI Analysis */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="grid md:grid-cols-2 gap-12 items-center mb-24"
+          >
+            <div className="order-2 md:order-1 aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm" />
+            <div className="order-1 md:order-2 space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="font-serif text-6xl text-foreground/10">02</span>
+                <Brain size={28} className="text-foreground/70" />
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl text-foreground">
+                AI reveals your hidden patterns
+              </h3>
+              <p className="font-serif text-lg text-muted-foreground leading-relaxed">
+                Our agentic AI reads your seven days of entries and identifies what your conscious mind misses: recurring themes, limiting beliefs, emotional patterns, and the stories you tell yourself. This isn't generic advice — it's a mirror.
+              </p>
+              <p className="font-sans text-sm text-muted-foreground/70 border-l-2 border-foreground/20 pl-4">
+                "The AI surfaced a pattern I'd been blind to for years. I kept writing about 'not being ready' — for relationships, for career moves, for life. Seeing it laid out changed everything."
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Step 3: Talk to Your Guide */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="grid md:grid-cols-2 gap-12 items-center mb-24"
+          >
+            <div className="space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="font-serif text-6xl text-foreground/10">03</span>
+                <MessageSquare size={28} className="text-foreground/70" />
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl text-foreground">
+                Converse with a legendary mind
+              </h3>
+              <p className="font-serif text-lg text-muted-foreground leading-relaxed">
+                Choose your guide — Jung, Jesus, Seneca, Buddha, and more. They receive your analysis and engage you in real conversation. Ask questions. Challenge their observations. Go deeper. They remember everything and respond as the masters themselves would.
+              </p>
+              <p className="font-sans text-sm text-muted-foreground/70 border-l-2 border-foreground/20 pl-4">
+                This isn't a chatbot. It's a dialogue with accumulated human wisdom, personalized to your psyche.
+              </p>
+            </div>
+            <div className="aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm" />
+          </motion.div>
+
+          {/* Step 4: Voice Sessions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="grid md:grid-cols-2 gap-12 items-center"
+          >
+            <div className="order-2 md:order-1 aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm" />
+            <div className="order-1 md:order-2 space-y-6">
+              <div className="flex items-center gap-4">
+                <span className="font-serif text-6xl text-foreground/10">04</span>
+                <Mic size={28} className="text-foreground/70" />
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl text-foreground">
+                Speak your truth aloud
+              </h3>
+              <p className="font-serif text-lg text-muted-foreground leading-relaxed">
+                Before your analysis, answer ten introspective questions with your voice. Speaking aloud accesses different parts of your mind than writing. The AI transcribes and weaves your spoken words into your analysis — catching what you reveal when you're not editing yourself.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Guides Section */}
-      <section className="py-24 md:py-32 px-6">
+      <section className="py-24 md:py-32 px-6 bg-foreground/[0.02]">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -180,13 +252,15 @@ export default function LandingPage() {
             className="text-center mb-16"
           >
             <p className="font-sans text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
-              Your Guides
+              Your Mentors
             </p>
             <h2 className="font-serif text-3xl md:text-5xl text-foreground tracking-tight mb-4">
-              Ten minds. Millennia of wisdom.
+              Wisdom that shaped humanity.
+              <br />
+              <span className="text-muted-foreground">Now shaped to you.</span>
             </h2>
-            <p className="font-serif text-lg text-muted-foreground max-w-lg mx-auto">
-              Each brings a different lens through which to understand your inner world.
+            <p className="font-serif text-lg text-muted-foreground max-w-2xl mx-auto mt-6">
+              Each guide brings a different lens. Jung explores your shadow. Seneca challenges your attachments. Jesus meets you with compassion. Buddha points to liberation. Choose based on what you need to hear.
             </p>
           </motion.div>
 
@@ -222,8 +296,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof / Philosophy */}
-      <section className="py-24 md:py-32 px-6 bg-foreground text-background">
+      {/* Quote */}
+      <section className="py-24 md:py-32 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -231,18 +305,18 @@ export default function LandingPage() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <blockquote className="font-serif text-2xl md:text-4xl leading-relaxed mb-8 italic">
-              "The unexamined life is not worth living."
+            <blockquote className="font-serif text-2xl md:text-4xl leading-relaxed mb-8 italic text-foreground">
+              "Until you make the unconscious conscious, it will direct your life and you will call it fate."
             </blockquote>
-            <p className="font-sans text-sm tracking-widest uppercase text-background/60">
-              — Socrates
+            <p className="font-sans text-sm tracking-widest uppercase text-muted-foreground">
+              — Carl Jung
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-24 md:py-32 px-6">
+      <section id="pricing" className="py-24 md:py-32 px-6 bg-foreground text-background">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -251,117 +325,88 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <p className="font-sans text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
-              Simple Pricing
+            <p className="font-sans text-xs tracking-[0.3em] uppercase text-background/50 mb-4">
+              Investment
             </p>
-            <h2 className="font-serif text-3xl md:text-5xl text-foreground tracking-tight">
-              For those who value depth.
+            <h2 className="font-serif text-3xl md:text-5xl tracking-tight mb-4">
+              A luxury for the inner life.
             </h2>
+            <p className="font-serif text-lg text-background/60 max-w-xl mx-auto">
+              Less than a therapy session. More than any journal you've ever used.
+            </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-            {/* Free Tier */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="p-8 border border-border rounded-sm"
-            >
-              <div className="mb-8">
-                <h3 className="font-serif text-xl text-foreground mb-2">Free</h3>
-                <div className="font-serif text-4xl text-foreground">
-                  $0
-                  <span className="text-lg text-muted-foreground">/forever</span>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="bg-background text-foreground p-10 md:p-14 rounded-sm max-w-2xl mx-auto"
+          >
+            <div className="text-center mb-10">
+              <div className="font-serif text-5xl md:text-6xl text-foreground mb-2">
+                {SUBSCRIPTION_PRICE}
+                <span className="text-2xl text-muted-foreground">/month</span>
+              </div>
+              <p className="font-sans text-sm text-muted-foreground">
+                Cancel anytime. No questions asked.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-10">
+              <div className="flex items-start gap-4">
+                <Check size={20} className="text-foreground mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-serif text-base text-foreground">Unlimited journal entries</p>
+                  <p className="font-sans text-sm text-muted-foreground">Beautiful, distraction-free writing space</p>
                 </div>
               </div>
-              
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-foreground/50 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-muted-foreground">Unlimited journal entries</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-foreground/50 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-muted-foreground">Elegant writing interface</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-foreground/50 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-muted-foreground">Entry history & organization</span>
-                </li>
-              </ul>
+              <div className="flex items-start gap-4">
+                <Check size={20} className="text-foreground mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-serif text-base text-foreground">AI-powered subconscious analysis</p>
+                  <p className="font-sans text-sm text-muted-foreground">Patterns, beliefs, and blind spots revealed</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <Check size={20} className="text-foreground mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-serif text-base text-foreground">Conversations with 10 legendary guides</p>
+                  <p className="font-sans text-sm text-muted-foreground">Jung, Jesus, Seneca, Buddha, and more</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <Check size={20} className="text-foreground mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-serif text-base text-foreground">Voice introspection sessions</p>
+                  <p className="font-sans text-sm text-muted-foreground">Speak your truth, let AI listen deeper</p>
+                </div>
+              </div>
+            </div>
 
-              <Link
-                href="/journal"
-                className="block w-full text-center py-4 border border-border font-sans text-sm tracking-widest uppercase text-foreground hover:bg-foreground/5 transition-colors"
-              >
-                Start Writing
+            <button
+              onClick={handleSubscribe}
+              disabled={isLoading}
+              className="w-full py-5 bg-foreground text-background font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isLoading ? "Opening checkout..." : "Start Your Journey"}
+            </button>
+          </motion.div>
+
+          <div className="text-center mt-12">
+            <p className="font-serif text-background/50">
+              Or{" "}
+              <Link href="/journal" className="text-background/80 border-b border-background/30 hover:border-background/60 transition-colors">
+                start with free journaling
               </Link>
-            </motion.div>
-
-            {/* Premium Tier */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="p-8 bg-foreground text-background rounded-sm relative overflow-hidden"
-            >
-              <div className="absolute top-4 right-4">
-                <span className="font-sans text-[10px] tracking-widest uppercase px-3 py-1 bg-background/10 rounded-full">
-                  Recommended
-                </span>
-              </div>
-
-              <div className="mb-8">
-                <h3 className="font-serif text-xl text-background mb-2">Premium</h3>
-                <div className="font-serif text-4xl text-background">
-                  {SUBSCRIPTION_PRICE}
-                  <span className="text-lg text-background/60">/month</span>
-                </div>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-background/70 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-background/80">Everything in Free</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-background/70 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-background/80">All 10 philosophical guides</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-background/70 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-background/80">Voice interview sessions</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-background/70 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-background/80">AI-powered analysis & diagnosis</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Check size={18} className="text-background/70 mt-0.5 flex-shrink-0" />
-                  <span className="font-sans text-sm text-background/80">Unlimited conversations with guides</span>
-                </li>
-              </ul>
-
-              <button
-                onClick={handleSubscribe}
-                disabled={isLoading}
-                className="block w-full text-center py-4 bg-background text-foreground font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {isLoading ? "Opening checkout..." : "Unlock Guides"}
-              </button>
-            </motion.div>
+              {" "}and upgrade when you're ready for the analysis.
+            </p>
           </div>
-
-          <p className="text-center font-sans text-xs text-muted-foreground mt-8">
-            Cancel anytime. No questions asked. Your journal entries are always yours.
-          </p>
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="py-24 md:py-32 px-6 border-t border-border">
+      <section className="py-24 md:py-32 px-6 bg-background">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -370,16 +415,16 @@ export default function LandingPage() {
           className="max-w-2xl mx-auto text-center"
         >
           <h2 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight mb-6">
-            Begin your journey.
+            What patterns are running your life?
           </h2>
-          <p className="font-serif text-lg text-muted-foreground mb-10 max-w-md mx-auto leading-relaxed">
-            Your inner world deserves the same attention you give the outer one.
+          <p className="font-serif text-lg text-muted-foreground mb-10 max-w-lg mx-auto leading-relaxed">
+            Seven days of writing. One conversation that changes everything.
           </p>
           <Link
             href="/journal"
-            className="inline-block px-10 py-5 bg-foreground text-background font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
+            className="inline-block px-12 py-5 bg-foreground text-background font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity"
           >
-            Start Writing
+            Begin Writing
           </Link>
         </motion.div>
       </section>
@@ -388,10 +433,10 @@ export default function LandingPage() {
       <footer className="py-12 px-6 border-t border-border">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="font-serif text-sm text-muted-foreground">
-            Journal — A Space for Reflection
+            Journal — Where Self-Knowledge Begins
           </p>
           <p className="font-sans text-xs text-muted-foreground">
-            For those who value depth over distraction.
+            A luxury experience for those who seek depth.
           </p>
         </div>
       </footer>

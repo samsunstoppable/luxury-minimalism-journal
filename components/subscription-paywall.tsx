@@ -14,24 +14,24 @@ interface SubscriptionPaywallProps {
 
 const PREMIUM_FEATURES = [
   {
-    icon: Users,
-    title: "Ten Legendary Guides",
-    description: "Jung, Buddha, Jesus, Seneca, and more await your reflection.",
-  },
-  {
-    icon: Mic,
-    title: "Voice Sessions",
-    description: "Speak your truth through guided introspection questions.",
-  },
-  {
     icon: Sparkles,
-    title: "The Diagnosis",
-    description: "Receive AI-generated insights from your chosen mentor.",
+    title: "Subconscious Pattern Analysis",
+    description: "Advanced AI reveals the hidden beliefs, recurring themes, and blind spots in your writing.",
   },
   {
     icon: MessageSquare,
-    title: "Ongoing Conversations",
-    description: "Continue the dialogue. Go deeper.",
+    title: "Conversations with Legends",
+    description: "Talk through your patterns with Jung, Jesus, Seneca, Buddha — mentors who understand your psyche.",
+  },
+  {
+    icon: Mic,
+    title: "Voice Introspection",
+    description: "Speak your truth aloud. AI listens for what you reveal when you're not editing yourself.",
+  },
+  {
+    icon: Users,
+    title: "Ten Legendary Guides",
+    description: "Each brings a different lens to your inner world. Choose based on what you need to hear.",
   },
 ]
 
@@ -85,13 +85,13 @@ export function SubscriptionPaywall({ isOpen, onClose }: SubscriptionPaywallProp
             <div className="p-8 md:p-12">
               <div className="text-center mb-10">
                 <p className="font-sans text-xs tracking-[0.3em] uppercase text-muted-foreground mb-4">
-                  Premium Experience
+                  Unlock the Full Experience
                 </p>
                 <h2 className="font-serif text-3xl md:text-4xl text-foreground tracking-tight mb-4">
-                  This experience awaits.
+                  See what you've been missing.
                 </h2>
                 <p className="font-serif text-lg text-muted-foreground max-w-md mx-auto leading-relaxed">
-                  Ten minds. Thousands of years of wisdom. One subscription.
+                  AI-powered analysis of your subconscious patterns. Conversations with history's greatest minds about what it reveals.
                 </p>
               </div>
 
@@ -150,15 +150,15 @@ export function SubscriptionPaywall({ isOpen, onClose }: SubscriptionPaywallProp
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Check size={12} className="text-foreground/50" />
-                  Unlimited journal entries
+                  Subconscious pattern analysis
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check size={12} className="text-foreground/50" />
-                  All 10 philosophical guides
+                  Conversations with 10 guides
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Check size={12} className="text-foreground/50" />
-                  Voice & chat sessions
+                  Voice introspection
                 </span>
               </div>
             </div>
