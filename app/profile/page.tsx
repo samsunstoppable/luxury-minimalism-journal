@@ -1,13 +1,39 @@
 "use client"
 
-import { useQuery } from "convex/react"
+import { useState } from "react"
+import { useQuery, useAction } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import Link from "next/link"
-import { ArrowLeft, User, Sparkles, MessageSquare, Settings } from "lucide-react"
+import { ArrowLeft, User, Sparkles, MessageSquare, Settings, Crown, Check, LogOut } from "lucide-react"
+import { isPremiumUser, SUBSCRIPTION_PRICE } from "@/lib/subscription"
+import { useClerk } from "@clerk/nextjs"
 
 export default function ProfilePage() {
   const user = useQuery(api.users.get);
   const sessions = useQuery(api.sessions.list);
+  const createCheckout = useAction(api.polar.createCheckout);
+  const { signOut } = useClerk();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const hasPremium = isPremiumUser(user?.subscriptionStatus);
+
+  const handleSignOut = () => {
+    signOut({ redirectUrl: "/" });
+  };
+
+  const handleUpgrade = async () => {
+    setIsLoading(true);
+    try {
+      const { url } = await createCheckout({});
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Derive initials
   const initials = user?.name
@@ -43,11 +69,53 @@ export default function ProfilePage() {
                 <h2 className="font-serif text-2xl">{user?.name || "Guest"}</h2>
                 <p className="text-muted-foreground text-sm">{user?.email}</p>
             </div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs tracking-wider uppercase text-muted-foreground">
+            {hasPremium ? (
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-xs tracking-wider uppercase">
+                <Crown size={12} />
+                Premium Member
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs tracking-wider uppercase text-muted-foreground">
                 <User size={12} />
-                {user?.subscriptionStatus || "Free Plan"}
-            </div>
+                Free Plan
+              </div>
+            )}
         </section>
+
+        {/* Upgrade CTA for Free Users */}
+        {!hasPremium && (
+          <section className="bg-foreground text-background p-6 md:p-8 rounded-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div className="space-y-2">
+                <h3 className="font-serif text-xl">Unlock Your Guides</h3>
+                <p className="font-sans text-sm text-background/70 max-w-md">
+                  Access ten legendary minds. Voice sessions. AI-powered analysis. All for {SUBSCRIPTION_PRICE}/month.
+                </p>
+              </div>
+              <button
+                onClick={handleUpgrade}
+                disabled={isLoading}
+                className="flex-shrink-0 px-8 py-3 bg-background text-foreground font-sans text-sm tracking-widest uppercase hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {isLoading ? "Loading..." : "Upgrade Now"}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-4 mt-6 pt-6 border-t border-background/20">
+              <span className="flex items-center gap-1.5 text-xs text-background/70">
+                <Check size={12} /> All 10 guides
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-background/70">
+                <Check size={12} /> Voice sessions
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-background/70">
+                <Check size={12} /> AI analysis
+              </span>
+              <span className="flex items-center gap-1.5 text-xs text-background/70">
+                <Check size={12} /> Unlimited chats
+              </span>
+            </div>
+          </section>
+        )}
 
         {/* AI Summary Card */}
         <section className="space-y-6">
@@ -133,6 +201,17 @@ export default function ProfilePage() {
                     <div className="w-10 h-6 bg-foreground rounded-full relative"><div className="w-4 h-4 bg-background rounded-full absolute top-1 right-1"/></div>
                  </div>
             </div>
+        </section>
+
+        {/* Sign Out */}
+        <section className="pt-6 border-t border-border">
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-3 w-full p-4 -mx-4 text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors rounded-sm"
+          >
+            <LogOut size={18} />
+            <span className="font-sans text-sm">Sign Out</span>
+          </button>
         </section>
 
       </div>

@@ -11,6 +11,8 @@ import { EmptyState } from "@/components/empty-state"
 import { AnalysisUnlock } from "@/components/analysis-unlock"
 import { VoiceInterview } from "@/components/voice-interview"
 import { AnalysisChat } from "@/components/analysis-chat"
+import { SubscriptionPaywall } from "@/components/subscription-paywall"
+import { isPremiumUser } from "@/lib/subscription"
 import type { Persona } from "@/components/persona-card"
 import Link from "next/link"
 import { User } from "lucide-react"
@@ -59,6 +61,9 @@ export default function JournalPage() {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isChatMode, setIsChatMode] = useState(false)
+  const [showPaywall, setShowPaywall] = useState(false)
+
+  const hasPremium = isPremiumUser(user?.subscriptionStatus)
 
   const handleNewEntry = () => {
     setSelectedEntry(null)
@@ -123,6 +128,10 @@ export default function JournalPage() {
   }
 
   const handleOpenAnalysis = () => {
+    if (!hasPremium) {
+      setShowPaywall(true)
+      return
+    }
     setIsAnalysisMode(true)
   }
 
@@ -173,14 +182,18 @@ export default function JournalPage() {
 
   if (isWriting && isDailyMode && !selectedEntry) {
     return (
-      <DailyEntry
-        onSave={handleSaveDailyEntry}
-        onCancel={handleCancel}
-        cycleDay={cycleDay}
-        cycleTotalDays={7}
-        onAnalyze={handleOpenAnalysis}
-        onDebugAdvance={() => setDebugDays(d => d + 1)}
-      />
+      <>
+        <DailyEntry
+          onSave={handleSaveDailyEntry}
+          onCancel={handleCancel}
+          cycleDay={cycleDay}
+          cycleTotalDays={7}
+          onAnalyze={handleOpenAnalysis}
+          onDebugAdvance={() => setDebugDays(d => d + 1)}
+          isPremium={hasPremium}
+        />
+        <SubscriptionPaywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
+      </>
     )
   }
 
@@ -300,6 +313,8 @@ export default function JournalPage() {
           </div>
         )}
       </div>
+
+      <SubscriptionPaywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
     </main>
   )
 }

@@ -13,6 +13,7 @@ interface DailyEntryProps {
   cycleTotalDays?: number
   onAnalyze?: () => void
   onDebugAdvance?: () => void
+  isPremium?: boolean
 }
 
 export function DailyEntry({
@@ -23,6 +24,7 @@ export function DailyEntry({
   cycleTotalDays = 7,
   onAnalyze,
   onDebugAdvance,
+  isPremium = false,
 }: DailyEntryProps) {
   const [content, setContent] = useState(initialContent)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -137,6 +139,7 @@ export function DailyEntry({
                       }`}
                     >
                       {!isAnalyzeEnabled && <Lock size={12} />}
+                      {isAnalyzeEnabled && !isPremium && <Lock size={12} />}
                       Analyze
                     </button>
                   </TooltipTrigger>
@@ -145,6 +148,11 @@ export function DailyEntry({
                       <p>
                         Gathering signal... {daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining.
                       </p>
+                    </TooltipContent>
+                  )}
+                  {isAnalyzeEnabled && !isPremium && (
+                    <TooltipContent side="top" className="bg-foreground text-background font-sans text-xs px-3 py-2">
+                      <p>Premium feature. Tap to learn more.</p>
                     </TooltipContent>
                   )}
                 </Tooltip>
