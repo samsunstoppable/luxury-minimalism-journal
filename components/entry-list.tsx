@@ -1,7 +1,7 @@
 "use client"
 
 import { Trash2 } from "lucide-react"
-import type { Entry } from "@/app/page"
+import type { Entry } from "@/app/journal/page"
 
 interface EntryListProps {
   entries: Entry[]

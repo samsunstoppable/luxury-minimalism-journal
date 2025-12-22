@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import type { Entry } from "@/app/page"
+import type { Entry } from "@/app/journal/page"
 
 interface JournalEntryProps {
   entry: Entry | null
