@@ -79,6 +79,31 @@ export const get = query({
     }
 });
 
+export const list = query({
+    args: {},
+    handler: async (ctx) => {
+        const identity = await ctx.auth.getUserIdentity();
+        let userId;
+        if (identity) {
+            const user = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", identity.tokenIdentifier)).unique();
+            if (!user) return [];
+            userId = user._id;
+        } else {
+             // Fallback for local dev
+            const devToken = "dev-user";
+            const devUser = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", devToken)).unique();
+            if (!devUser) return [];
+            userId = devUser._id;
+        }
+
+        return await ctx.db
+            .query("sessions")
+            .withIndex("by_user", q => q.eq("userId", userId))
+            .order("desc")
+            .collect();
+    }
+});
+
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {

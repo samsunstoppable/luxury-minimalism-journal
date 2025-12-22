@@ -8,6 +8,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     subscriptionStatus: v.optional(v.string()), // "free", "active", "past_due"
     subscriptionId: v.optional(v.string()), // Polar subscription ID
+    summary: v.optional(v.string()), // AI-generated summary of the user
   }).index("by_token", ["tokenIdentifier"]),
 
   entries: defineTable({

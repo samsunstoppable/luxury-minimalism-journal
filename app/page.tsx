@@ -12,6 +12,8 @@ import { AnalysisUnlock } from "@/components/analysis-unlock"
 import { VoiceInterview } from "@/components/voice-interview"
 import { AnalysisChat } from "@/components/analysis-chat"
 import type { Persona } from "@/components/persona-card"
+import Link from "next/link"
+import { User } from "lucide-react"
 
 export interface Entry {
   id: string
@@ -22,6 +24,7 @@ export interface Entry {
 
 export default function JournalPage() {
   // Convex Hooks
+  const user = useQuery(api.users.get);
   const rawEntries = useQuery(api.entries.list);
   const createEntry = useMutation(api.entries.create);
   const updateEntry = useMutation(api.entries.update);
@@ -207,6 +210,29 @@ export default function JournalPage() {
             menuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
+          {/* Navigation Section */}
+          <div className="mb-10 space-y-2">
+            <h2 className="font-serif text-sm text-muted-foreground tracking-widest uppercase mb-4">Account</h2>
+             <Link 
+                href="/profile" 
+                className="flex items-center gap-3 p-3 -mx-3 rounded-md hover:bg-foreground/5 transition-colors group"
+             >
+                <div className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors">
+                    {user?.name ? (
+                        <span className="font-serif text-lg">{user.name[0].toUpperCase()}</span>
+                    ) : (
+                        <User size={18} />
+                    )}
+                </div>
+                <div className="flex flex-col">
+                    <span className="font-serif text-base text-foreground">{user?.name || "Profile"}</span>
+                    {user?.email && (
+                        <span className="font-sans text-xs text-muted-foreground">{user.email}</span>
+                    )}
+                </div>
+             </Link>
+          </div>
+
           <h2 className="font-serif text-xl text-foreground mb-8 tracking-wide">Your Entries</h2>
           {entries.length > 0 ? (
             <EntryList

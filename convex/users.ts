@@ -1,5 +1,42 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
+
+export const getByToken = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", args.token))
+      .unique();
+  },
+});
+
+export const get = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+       // Fallback for local dev
+        const devToken = "dev-user";
+        const devUser = await ctx.db.query("users").withIndex("by_token", q => q.eq("tokenIdentifier", devToken)).unique();
+        if (!devUser) return null;
+        return devUser;
+    }
+    return await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+  },
+});
+
+export const updateSummary = mutation({
+  args: { userId: v.id("users"), summary: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, { summary: args.summary });
+  }
+});
 
 export const store = mutation({
   args: {},

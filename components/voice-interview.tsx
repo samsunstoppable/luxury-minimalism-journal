@@ -41,6 +41,8 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
 
   const currentQuestion = INTROSPECTION_QUESTIONS[currentQuestionIndex]
   const isLastQuestion = currentQuestionIndex === INTROSPECTION_QUESTIONS.length - 1

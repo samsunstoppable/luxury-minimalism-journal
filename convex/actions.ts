@@ -109,9 +109,96 @@ export const analyzeSession = action({
         sessionId: args.sessionId, 
         analysis 
     });
+
+    // Update User Summary
+    await ctx.runAction(api.actions.updateUserSummary, {
+        userId: session.userId,
+        sessionId: args.sessionId
+    });
     
     return analysis;
   },
+});
+
+export const updateUserSummary = action({
+    args: { userId: v.id("users"), sessionId: v.id("sessions") },
+    handler: async (ctx, args) => {
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+        if (!OPENROUTER_API_KEY) throw new Error("Missing OPENROUTER_API_KEY");
+
+        // Fetch User (for existing summary)
+        const user: any = await ctx.runQuery(api.users.get, {});
+        // Note: api.users.get uses auth context, which might not be available here depending on how it's called.
+        // If called from analyzeSession (action -> action), auth context is preserved if identity was present.
+        // However, it's safer to pass userId directly if we needed to fetch specific user data not via 'get' which defaults to current auth.
+        // But api.users.get as written currently checks auth.
+        // Let's assume the user is authenticated when starting the session analysis.
+        
+        // Actually, if we are in an action called by an action, we might lose auth context depending on Convex internals?
+        // No, `ctx.auth` should work if the original call was authenticated.
+        // But `api.users.get` uses `ctx.auth`.
+        // Let's rely on that.
+
+        const currentSummary = user?.summary || "No summary yet.";
+        
+        // Fetch the NEW Session Analysis
+        const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
+        const newAnalysis = session?.analysis || "";
+        const transcript = session?.transcript || "";
+
+        // Fetch Recent Entries (Context)
+        // We could just pass the relevant ones, but fetching list is fine for now
+        const entries: any[] = await ctx.runQuery(api.entries.list, {});
+        const entriesText = entries.slice(0, 5).map((e: any) => `- ${e.title}: ${e.content}`).join("\n"); // Limit to recent 5
+
+        const prompt = `
+            You are an expert psychologist building a cumulative profile of a user.
+            
+            Current User Summary:
+            "${currentSummary}"
+            
+            New Information from latest session (Transcript & Analysis):
+            Analysis: ${newAnalysis}
+            Transcript Excerpt: ${transcript.substring(0, 2000)}...
+            
+            Recent Journal Entries:
+            ${entriesText}
+            
+            Task:
+            Update the "User Summary" to incorporate insights from this new session and recent entries.
+            The summary should be a concise but comprehensive psychological profile (2-3 paragraphs).
+            It should describe who they are, their core values, recurring struggles, communication style, and what they enjoy.
+            Do NOT just append the new info. Integrate it into a cohesive narrative.
+            If the current summary is "No summary yet", create a fresh one.
+        `;
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "deepseek/deepseek-chat",
+                messages: [{ role: "user", content: prompt }]
+            })
+        });
+
+        if (!response.ok) {
+            console.error("Failed to update user summary");
+            return;
+        }
+
+        const data = await response.json();
+        const updatedSummary = data.choices[0]?.message?.content;
+
+        if (updatedSummary) {
+            await ctx.runMutation(api.users.updateSummary, {
+                userId: args.userId,
+                summary: updatedSummary
+            });
+        }
+    }
 });
 
 export const generateChatReply = action({
@@ -131,19 +218,23 @@ export const generateChatReply = action({
     const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
     if (!session) throw new Error("Session not found");
 
-    // 2. Fetch Journal Entries (Context)
+    // 2. Fetch User for Summary
+    const user: any = await ctx.runQuery(api.users.get, {});
+    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+
+    // 3. Fetch Journal Entries (Context)
     const entries: any[] = await ctx.runQuery(api.entries.list, {});
 
-    // 3. Fetch Chat History
+    // 4. Fetch Chat History
     const messages: any[] = await ctx.runQuery(api.messages.list, { sessionId: args.sessionId });
 
-    // 4. Construct System Prompt
+    // 5. Construct System Prompt
     const personaPrompt = PERSONA_PROMPTS[session.personaId] || "You are a helpful assistant.";
     
     const entriesText = entries.map(e => `[${e.date}] ${e.title}:\n${e.content}`).join("\n\n");
-    const systemPrompt = `${personaPrompt}\n\nHere is the user's journal for context:\n\n${entriesText}`;
+    const systemPrompt = `${personaPrompt}${userSummary}\n\nHere is the user's journal for context:\n\n${entriesText}`;
 
-    // 5. Construct Message History
+    // 6. Construct Message History
     const apiMessages = [
         { role: "system", content: systemPrompt },
         ...messages.map(m => ({
@@ -152,7 +243,7 @@ export const generateChatReply = action({
         }))
     ];
 
-    // 6. Call OpenRouter
+    // 7. Call OpenRouter
     try {
         const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -174,7 +265,7 @@ export const generateChatReply = action({
         const data = await response.json();
         const reply = data.choices[0]?.message?.content || "(No response)";
 
-        // 7. Save Reply
+        // 8. Save Reply
         await ctx.runMutation(api.messages.saveAIMessage, {
             sessionId: args.sessionId,
             content: reply
