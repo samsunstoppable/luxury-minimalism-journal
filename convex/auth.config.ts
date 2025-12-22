@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: process.env.CLERK_ISSUER_URL,
+      domain: "https://grateful-stingray-72.clerk.accounts.dev",
       applicationID: "convex",
     },
   ],
