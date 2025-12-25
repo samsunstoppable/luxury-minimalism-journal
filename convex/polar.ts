@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { action, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Polar } from "@polar-sh/sdk";
+import { validateEvent } from "@polar-sh/sdk/webhooks";
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN ?? "",
@@ -43,18 +44,26 @@ export const createCheckout = action({
 
 export const handleWebhook = action({
   args: {
-    signature: v.string(),
+    headers: v.record(v.string(), v.string()),
     payload: v.string(),
   },
   handler: async (ctx, args) => {
-    // TODO: Verify signature using args.signature and process.env.POLAR_WEBHOOK_SECRET
-    // For now, we proceed to parse the payload.
-    
-    const event: any = JSON.parse(args.payload);
+    const secret = process.env.POLAR_WEBHOOK_SECRET;
+    if (!secret) {
+      throw new Error("POLAR_WEBHOOK_SECRET is not set");
+    }
+
+    let event;
+    try {
+      event = validateEvent(args.payload, args.headers, secret);
+    } catch (error) {
+      console.error("Webhook verification failed:", error);
+      throw new Error("Invalid webhook signature");
+    }
 
     if (event.type === "subscription.created" || event.type === "subscription.updated" || event.type === "subscription.active") {
        const subscription = event.data;
-       const userId = subscription.metadata?.userId;
+       const userId = (subscription.metadata as any)?.userId;
        
        if (userId) {
            await ctx.runMutation(internal.users.updateSubscription, {

@@ -9,16 +9,22 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const payload = await request.text();
-    const signature = request.headers.get("Webhook-Signature");
+    const signature = request.headers.get("webhook-signature") || request.headers.get("Webhook-Signature");
+    const timestamp = request.headers.get("webhook-timestamp") || request.headers.get("Webhook-Timestamp");
+    const id = request.headers.get("webhook-id") || request.headers.get("Webhook-Id");
 
-    if (!signature) {
-      return new Response("Missing signature", { status: 400 });
+    if (!signature || !timestamp || !id) {
+      return new Response("Missing required headers", { status: 400 });
     }
 
     try {
       await ctx.runAction(api.polar.handleWebhook, {
         payload,
-        signature,
+        headers: {
+          "webhook-signature": signature,
+          "webhook-timestamp": timestamp,
+          "webhook-id": id,
+        },
       });
     } catch (e) {
       console.error(e);
