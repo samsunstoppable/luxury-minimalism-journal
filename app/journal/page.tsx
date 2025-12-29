@@ -22,6 +22,7 @@ import Link from "next/link"
 import { User } from "lucide-react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export interface Entry {
   id: Id<"entries">
@@ -59,7 +60,7 @@ function JournalPageContent() {
 
   const entries: Entry[] = useMemo(() => {
     if (!rawEntries) return [];
-    return rawEntries.map(e => ({
+    return rawEntries.map((e: any) => ({
       id: e._id,
       title: e.title || "Untitled",
       content: e.content,
@@ -330,6 +331,31 @@ function JournalPageContent() {
       <div className="max-w-2xl mx-auto px-6 py-16 md:py-24">
         {isWriting ? (
           <JournalEntry entry={selectedEntry} onSave={handleSaveEntry} onCancel={handleCancel} />
+        ) : rawEntries === undefined ? (
+          <div className="space-y-16">
+            <div className="text-center space-y-4">
+              <Skeleton className="h-10 w-64 mx-auto" />
+              <Skeleton className="h-4 w-48 mx-auto" />
+            </div>
+            <div className="flex justify-center">
+              <Skeleton className="h-6 w-32" />
+            </div>
+            <div className="space-y-12">
+              <Skeleton className="h-8 w-24 mx-auto" />
+              <div className="space-y-8">
+                <div className="space-y-3 py-6 border-t border-border">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+                <div className="space-y-3 py-6 border-t border-border">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-8 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
         ) : entries.length === 0 ? (
           <EmptyState onNewEntry={handleNewEntry} />
         ) : (

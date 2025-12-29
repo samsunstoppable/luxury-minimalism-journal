@@ -4,12 +4,12 @@ import { internal } from "./_generated/api";
 export const checkReminders = internalAction({
   args: {},
   handler: async (ctx) => {
-    const users = await ctx.runQuery(internal.reminderLogic.getUsersToRemind);
+    const users = await ctx.runMutation(internal.reminderLogic.getUsersToRemind);
     
     for (const user of users) {
       await ctx.runAction(internal.emails.sendReminderEmail, {
         email: user.email,
-        name: user.name,
+        name: user.name || "there",
       });
     }
   },

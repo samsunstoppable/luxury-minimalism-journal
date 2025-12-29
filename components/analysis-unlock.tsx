@@ -65,6 +65,7 @@ const PERSONAS: Persona[] = [
     name: "Sigmund Freud",
     subtitle: "The Dream Interpreter",
     imageQuery: "Sigmund Freud portrait black and white cigar psychoanalyst",
+    imageSrc: "/placeholder-user.jpg",
   },
   {
     id: "rumi",

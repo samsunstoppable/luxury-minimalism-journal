@@ -32,11 +32,11 @@ export const transcribeAudio = action({
       throw new Error("Missing OPENAI_API_KEY. Please add it to your .env.local to use real transcription.");
     }
 
-    const user: any = await ctx.runQuery(api.users.get, {});
-    if (!user) throw new Error("Unauthorized");
+    const currentUser: any = await ctx.runQuery(api.users.get, {});
+    if (!currentUser) throw new Error("Unauthorized");
 
     const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
-        userId: user._id,
+        userId: currentUser._id,
         action: "transcribeAudio",
         limit: OPENAI_RATE_LIMIT
     });
@@ -80,11 +80,11 @@ export const analyzeSession = action({
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     if (!OPENROUTER_API_KEY) throw new Error("Missing OPENROUTER_API_KEY");
 
-    const user: any = await ctx.runQuery(api.users.get, {});
-    if (!user) throw new Error("Unauthorized");
+    const currentUser: any = await ctx.runQuery(api.users.get, {});
+    if (!currentUser) throw new Error("Unauthorized");
 
     const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
-        userId: user._id,
+        userId: currentUser._id,
         action: "analyzeSession",
         limit: OPENROUTER_RATE_LIMIT
     });
@@ -157,7 +157,7 @@ export const updateUserSummary = action({
         if (!OPENROUTER_API_KEY) throw new Error("Missing OPENROUTER_API_KEY");
 
         // Fetch User (for existing summary)
-        const user: any = await ctx.runQuery(api.users.get, {});
+        const currentUser: any = await ctx.runQuery(api.users.get, {});
         // Note: api.users.get uses auth context, which might not be available here depending on how it's called.
         // If called from analyzeSession (action -> action), auth context is preserved if identity was present.
         // However, it's safer to pass userId directly if we needed to fetch specific user data not via 'get' which defaults to current auth.
@@ -169,7 +169,7 @@ export const updateUserSummary = action({
         // But `api.users.get` uses `ctx.auth`.
         // Let's rely on that.
 
-        const currentSummary = user?.summary || "No summary yet.";
+        const currentSummary = currentUser?.summary || "No summary yet.";
         
         // Fetch the NEW Session Analysis
         const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
@@ -244,11 +244,11 @@ export const generateChatReply = action({
         return;
     }
 
-    const user: any = await ctx.runQuery(api.users.get, {});
-    if (!user) throw new Error("Unauthorized");
+    const currentUser: any = await ctx.runQuery(api.users.get, {});
+    if (!currentUser) throw new Error("Unauthorized");
 
     const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
-        userId: user._id,
+        userId: currentUser._id,
         action: "chatReply",
         limit: OPENROUTER_RATE_LIMIT
     });
@@ -266,8 +266,7 @@ export const generateChatReply = action({
     if (!session) throw new Error("Session not found");
 
     // 2. Fetch User for Summary
-    const user: any = await ctx.runQuery(api.users.get, {});
-    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+    const userSummary = currentUser?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${currentUser.summary}` : "";
 
     // 3. Fetch Journal Entries (Context)
     const entries: any[] = await ctx.runQuery(api.entries.list, {});
@@ -341,11 +340,11 @@ export const generateDailyReflection = action({
       return;
     }
 
-    const user: any = await ctx.runQuery(api.users.get, {});
-    if (!user) throw new Error("Unauthorized");
+    const currentUser: any = await ctx.runQuery(api.users.get, {});
+    if (!currentUser) throw new Error("Unauthorized");
 
     const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
-        userId: user._id,
+        userId: currentUser._id,
         action: "dailyReflection",
         limit: OPENROUTER_RATE_LIMIT
     });
@@ -368,8 +367,7 @@ export const generateDailyReflection = action({
     if (!entry) throw new Error("Entry not found");
 
     // 3. Fetch User for Summary
-    const user: any = await ctx.runQuery(api.users.get, {});
-    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+    const userSummary = currentUser?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${currentUser.summary}` : "";
 
     // 4. Fetch Chat History
     const messages: any[] = await ctx.runQuery(api.dailyChats.listMessages, { chatId: args.chatId });
@@ -448,11 +446,11 @@ export const generateInitialReflection = action({
       return;
     }
 
-    const user: any = await ctx.runQuery(api.users.get, {});
-    if (!user) throw new Error("Unauthorized");
+    const currentUser: any = await ctx.runQuery(api.users.get, {});
+    if (!currentUser) throw new Error("Unauthorized");
 
     const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
-        userId: user._id,
+        userId: currentUser._id,
         action: "initialReflection",
         limit: OPENROUTER_RATE_LIMIT
     });
@@ -475,8 +473,7 @@ export const generateInitialReflection = action({
     if (!entry) throw new Error("Entry not found");
 
     // 3. Fetch User for Summary
-    const user: any = await ctx.runQuery(api.users.get, {});
-    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+    const userSummary = currentUser?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${currentUser.summary}` : "";
 
     // 4. Construct System Prompt
     const personaPrompt = PERSONA_PROMPTS[chat.personaId] || "You are a wise and compassionate mentor.";

@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation, action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 
 export const getByToken = internalQuery({
   args: { token: v.string() },
@@ -208,7 +208,7 @@ export const deleteAccount = mutation({
 
 export const exportData = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<any> => {
     const user: any = await ctx.runQuery(api.users.get, {});
     if (!user) throw new Error("Unauthorized");
 

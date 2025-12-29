@@ -20,8 +20,46 @@ const GUIDES = [
   { name: "Marcus Aurelius", subtitle: "The Philosopher King", image: "/guides/marcus-aurelius.jpeg" },
   { name: "Lao Tzu", subtitle: "The Taoist Master", image: "/guides/lao-tzu.jpg" },
   { name: "Rumi", subtitle: "The Mystic Poet", image: "/guides/rumi.jpg" },
-  { name: "Sigmund Freud", subtitle: "The Dream Interpreter", image: "/guides/freud.webp" },
+  { name: "Sigmund Freud", subtitle: "The Dream Interpreter", image: "/placeholder-user.jpg" },
 ]
+
+const IllustrationWrite = () => (
+  <svg viewBox="0 0 400 300" className="w-full h-full opacity-[0.03] dark:opacity-[0.05]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="50" y="40" width="300" height="220" rx="2" stroke="currentColor" strokeWidth="1" />
+    <line x1="80" y1="80" x2="320" y2="80" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+    <line x1="80" y1="110" x2="320" y2="110" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+    <line x1="80" y1="140" x2="260" y2="140" stroke="currentColor" strokeWidth="1" strokeDasharray="4 4" />
+    <circle cx="330" cy="240" r="15" stroke="currentColor" strokeWidth="1" />
+    <path d="M325 240L335 240M330 235L330 245" stroke="currentColor" strokeWidth="1" />
+  </svg>
+)
+
+const IllustrationAnalysis = () => (
+  <svg viewBox="0 0 400 300" className="w-full h-full opacity-[0.03] dark:opacity-[0.05]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="200" cy="150" r="80" stroke="currentColor" strokeWidth="1" strokeDasharray="8 8" />
+    <circle cx="200" cy="150" r="40" stroke="currentColor" strokeWidth="1" />
+    <path d="M160 110L240 190M240 110L160 190" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+    <rect x="280" y="60" width="60" height="20" rx="10" stroke="currentColor" strokeWidth="1" />
+    <rect x="60" y="220" width="80" height="20" rx="10" stroke="currentColor" strokeWidth="1" />
+  </svg>
+)
+
+const IllustrationGuide = () => (
+  <svg viewBox="0 0 400 300" className="w-full h-full opacity-[0.03] dark:opacity-[0.05]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M80 60H320V200H180L140 240V200H80V60Z" stroke="currentColor" strokeWidth="1" />
+    <circle cx="130" cy="110" r="20" stroke="currentColor" strokeWidth="1" />
+    <line x1="170" y1="100" x2="270" y2="100" stroke="currentColor" strokeWidth="1" />
+    <line x1="170" y1="120" x2="240" y2="120" stroke="currentColor" strokeWidth="1" />
+  </svg>
+)
+
+const IllustrationVoice = () => (
+  <svg viewBox="0 0 400 300" className="w-full h-full opacity-[0.03] dark:opacity-[0.05]" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M100 150C120 100 150 100 170 150C190 200 220 200 240 150C260 100 290 100 310 150" stroke="currentColor" strokeWidth="1" />
+    <path d="M100 170C120 120 150 120 170 170C190 220 220 220 240 170C260 120 290 120 310 170" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+    <path d="M100 130C120 80 150 80 170 130C190 180 220 180 240 130C260 80 290 80 310 130" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+  </svg>
+)
 
 export default function LandingPage() {
   const createCheckout = useAction(api.polar.createCheckout)
@@ -60,7 +98,7 @@ export default function LandingPage() {
             The World's First AI-Powered Depth Journal
           </p>
           
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6 md:mb-8">
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-foreground tracking-tight leading-[1.1] mb-6 md:mb-8 text-balance">
             Uncover your
             <br />
             <span className="italic text-foreground/90">subconscious patterns.</span>
@@ -164,8 +202,9 @@ export default function LandingPage() {
                 An elegant, distraction-free space for your thoughts. No prompts unless you want them. Just you and the page, building a week of authentic reflection.
               </p>
             </div>
-            <div className="aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden">
+            <div className="aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-br from-foreground/[0.02] to-transparent" />
+              <IllustrationWrite />
             </div>
           </motion.div>
 
@@ -177,8 +216,9 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="grid md:grid-cols-2 gap-8 md:gap-12 items-center mb-16 md:mb-24"
           >
-            <div className="order-2 md:order-1 aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden">
+            <div className="order-2 md:order-1 aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-bl from-foreground/[0.02] to-transparent" />
+              <IllustrationAnalysis />
             </div>
             <div className="order-1 md:order-2 space-y-4 md:space-y-6">
               <div className="flex items-center gap-4">
@@ -220,8 +260,9 @@ export default function LandingPage() {
                 This isn't a chatbot. It's a dialogue with accumulated human wisdom, personalized to your psyche.
               </p>
             </div>
-            <div className="aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden">
+            <div className="aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-tr from-foreground/[0.02] to-transparent" />
+              <IllustrationGuide />
             </div>
           </motion.div>
 
@@ -233,8 +274,9 @@ export default function LandingPage() {
             transition={{ duration: 0.5 }}
             className="grid md:grid-cols-2 gap-8 md:gap-12 items-center"
           >
-            <div className="order-2 md:order-1 aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden">
+            <div className="order-2 md:order-1 aspect-[16/10] md:aspect-[4/3] bg-foreground/[0.03] border border-border rounded-sm relative overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 bg-gradient-to-tl from-foreground/[0.02] to-transparent" />
+              <IllustrationVoice />
             </div>
             <div className="order-1 md:order-2 space-y-4 md:space-y-6">
               <div className="flex items-center gap-4">

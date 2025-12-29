@@ -11,19 +11,23 @@ import { toast } from "sonner"
 import { Footer } from "@/components/footer"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "next-themes"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AnalysisChat } from "@/components/analysis-chat"
+import type { Persona } from "@/components/persona-card"
+import type { Id } from "@/convex/_generated/dataModel"
 
 const PERSONAS = [
-  { id: "jung", name: "Carl Jung" },
-  { id: "jesus", name: "Jesus" },
-  { id: "nietzsche", name: "Friedrich Nietzsche" },
-  { id: "seneca", name: "Seneca" },
-  { id: "buddha", name: "Buddha" },
-  { id: "socrates", name: "Socrates" },
-  { id: "aurelius", name: "Marcus Aurelius" },
-  { id: "lao-tzu", name: "Lao Tzu" },
-  { id: "rumi", name: "Rumi" },
-  { id: "freud", name: "Sigmund Freud" },
+  { id: "jung", name: "Carl Jung", subtitle: "The Shadow Analyst", imageQuery: "" },
+  { id: "jesus", name: "Jesus", subtitle: "The Compassionate Healer", imageQuery: "" },
+  { id: "nietzsche", name: "Friedrich Nietzsche", subtitle: "The Will to Power", imageQuery: "" },
+  { id: "seneca", name: "Seneca", subtitle: "The Stoic Sage", imageQuery: "" },
+  { id: "buddha", name: "Buddha", subtitle: "The Enlightened One", imageQuery: "" },
+  { id: "socrates", name: "Socrates", subtitle: "The Questioner", imageQuery: "" },
+  { id: "aurelius", name: "Marcus Aurelius", subtitle: "The Philosopher King", imageQuery: "" },
+  { id: "lao-tzu", name: "Lao Tzu", subtitle: "The Taoist Master", imageQuery: "" },
+  { id: "rumi", name: "Rumi", subtitle: "The Mystic Poet", imageQuery: "" },
+  { id: "freud", name: "Sigmund Freud", subtitle: "The Dream Interpreter", imageQuery: "" },
 ]
 
 export default function ProfilePage() {
@@ -39,6 +43,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeSession, setActiveSession] = useState<{ id: Id<"sessions">, persona: Persona } | null>(null);
 
   const hasPremium = isPremiumUser(user?.subscriptionStatus);
 
@@ -104,7 +109,7 @@ export default function ProfilePage() {
   const initials = user?.name
     ? user.name
         .split(" ")
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join("")
         .toUpperCase()
         .slice(0, 2)
@@ -127,23 +132,35 @@ export default function ProfilePage() {
         
         {/* User Card */}
         <section className="flex flex-col items-center text-center space-y-4">
-            <div className="w-24 h-24 rounded-full bg-foreground/5 flex items-center justify-center mb-2">
-                <span className="font-serif text-3xl tracking-widest text-foreground/80">{initials}</span>
-            </div>
-            <div>
-                <h2 className="font-serif text-2xl">{user?.name || "Guest"}</h2>
-                <p className="text-muted-foreground text-sm">{user?.email}</p>
-            </div>
-            {hasPremium ? (
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-xs tracking-wider uppercase">
-                <Crown size={12} />
-                Premium Member
-              </div>
+            {user === undefined ? (
+              <>
+                <Skeleton className="w-24 h-24 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-48 mx-auto" />
+                  <Skeleton className="h-4 w-32 mx-auto" />
+                </div>
+              </>
             ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs tracking-wider uppercase text-muted-foreground">
-                <User size={12} />
-                Free Plan
-              </div>
+              <>
+                <div className="w-24 h-24 rounded-full bg-foreground/5 flex items-center justify-center mb-2">
+                    <span className="font-serif text-3xl tracking-widest text-foreground/80">{initials}</span>
+                </div>
+                <div>
+                    <h2 className="font-serif text-2xl">{user?.name || "Guest"}</h2>
+                    <p className="text-muted-foreground text-sm">{user?.email}</p>
+                </div>
+                {hasPremium ? (
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-xs tracking-wider uppercase">
+                    <Crown size={12} />
+                    Premium Member
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs tracking-wider uppercase text-muted-foreground">
+                    <User size={12} />
+                    Free Plan
+                  </div>
+                )}
+              </>
             )}
         </section>
 
@@ -191,7 +208,7 @@ export default function ProfilePage() {
             <div className="bg-card border border-border p-6 md:p-8 rounded-sm shadow-sm">
                 {user?.summary ? (
                     <div className="prose prose-sm prose-p:text-muted-foreground prose-p:leading-relaxed font-serif">
-                        {user.summary.split('\n').map((para, i) => (
+                        {user.summary.split('\n').map((para: string, i: number) => (
                              <p key={i} className="mb-4 last:mb-0">{para}</p>
                         ))}
                     </div>
@@ -215,12 +232,23 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-px bg-border border border-border rounded-sm overflow-hidden">
                 {sessions === undefined ? (
-                    <div className="p-8 text-center text-muted-foreground">Loading...</div>
+                    <div className="bg-card p-6 space-y-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
                 ) : sessions.length === 0 ? (
                     <div className="p-8 text-center text-muted-foreground">No conversations yet.</div>
                 ) : (
-                    sessions.map((session) => (
-                        <div key={session._id} className="bg-card p-4 md:p-6 flex items-center justify-between hover:bg-foreground/5 transition-colors group">
+                    sessions.map((session: any) => (
+                        <button 
+                            key={session._id} 
+                            onClick={() => {
+                                const persona = PERSONAS.find(p => p.id === session.personaId) || PERSONAS[0];
+                                setActiveSession({ id: session._id, persona });
+                            }}
+                            className="w-full text-left bg-card p-4 md:p-6 flex items-center justify-between hover:bg-foreground/5 transition-colors group"
+                        >
                             <div className="space-y-1">
                                 <div className="flex items-center gap-3">
                                     <span className="font-serif text-lg capitalize">{session.personaId}</span>
@@ -240,13 +268,21 @@ export default function ProfilePage() {
                                     })}
                                 </p>
                             </div>
-                            {/* Potential Action: View Detail / Transcript? 
-                                For now, just static history. 
-                            */}
-                        </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                <MessageSquare size={16} className="text-muted-foreground" />
+                            </div>
+                        </button>
                     ))
                 )}
             </div>
+
+            {activeSession && (
+                <AnalysisChat 
+                    persona={activeSession.persona} 
+                    sessionId={activeSession.id} 
+                    onClose={() => setActiveSession(null)} 
+                />
+            )}
         </section>
 
         {/* Settings */}

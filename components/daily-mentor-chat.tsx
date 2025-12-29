@@ -100,7 +100,7 @@ export function DailyMentorChat({ persona, chatId, onClose }: DailyMentorChatPro
             </div>
           )}
           
-          {messages.map((message) => (
+          {messages.map((message: any) => (
             <motion.div
               key={message._id}
               initial={{ opacity: 0, y: 10 }}
