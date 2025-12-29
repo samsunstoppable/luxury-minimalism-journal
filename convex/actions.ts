@@ -1,7 +1,11 @@
 "use node";
 import { action } from "./_generated/server";
 import { v } from "convex/values";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
+import { Id } from "./_generated/dataModel";
+
+const OPENAI_RATE_LIMIT = parseInt(process.env.OPENAI_RATE_LIMIT || "5");
+const OPENROUTER_RATE_LIMIT = parseInt(process.env.OPENROUTER_RATE_LIMIT || "20");
 
 // These URLs should be environment variables
 // const MODAL_TRANSCRIBE_URL = process.env.MODAL_TRANSCRIBE_URL;
@@ -26,6 +30,19 @@ export const transcribeAudio = action({
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     if (!OPENAI_API_KEY) {
       throw new Error("Missing OPENAI_API_KEY. Please add it to your .env.local to use real transcription.");
+    }
+
+    const user: any = await ctx.runQuery(api.users.get, {});
+    if (!user) throw new Error("Unauthorized");
+
+    const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
+        userId: user._id,
+        action: "transcribeAudio",
+        limit: OPENAI_RATE_LIMIT
+    });
+
+    if (!rateLimit.allowed) {
+        throw new Error(`Rate limit exceeded for transcription (${rateLimit.count}/${OPENAI_RATE_LIMIT}). Please try again tomorrow.`);
     }
 
     // 1. Download the audio file from the URL provided by the client/storage
@@ -62,6 +79,19 @@ export const analyzeSession = action({
   handler: async (ctx, args): Promise<string> => {
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     if (!OPENROUTER_API_KEY) throw new Error("Missing OPENROUTER_API_KEY");
+
+    const user: any = await ctx.runQuery(api.users.get, {});
+    if (!user) throw new Error("Unauthorized");
+
+    const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
+        userId: user._id,
+        action: "analyzeSession",
+        limit: OPENROUTER_RATE_LIMIT
+    });
+
+    if (!rateLimit.allowed) {
+        throw new Error(`Rate limit exceeded for analysis (${rateLimit.count}/${OPENROUTER_RATE_LIMIT}). Please try again tomorrow.`);
+    }
 
     // Fetch session and entries
     const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
@@ -214,6 +244,23 @@ export const generateChatReply = action({
         return;
     }
 
+    const user: any = await ctx.runQuery(api.users.get, {});
+    if (!user) throw new Error("Unauthorized");
+
+    const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
+        userId: user._id,
+        action: "chatReply",
+        limit: OPENROUTER_RATE_LIMIT
+    });
+
+    if (!rateLimit.allowed) {
+        await ctx.runMutation(api.messages.saveAIMessage, {
+            sessionId: args.sessionId,
+            content: "Rate limit exceeded for AI responses. Please try again tomorrow."
+        });
+        return;
+    }
+
     // 1. Fetch Session to get Persona
     const session: any = await ctx.runQuery(api.sessions.get, { sessionId: args.sessionId });
     if (!session) throw new Error("Session not found");
@@ -277,6 +324,208 @@ export const generateChatReply = action({
             sessionId: args.sessionId,
             content: "I apologize, but I am having trouble connecting to my thoughts right now. (AI Error)"
         });
+    }
+  }
+});
+
+export const generateDailyReflection = action({
+  args: { chatId: v.id("dailyChats"), content: v.string() },
+  handler: async (ctx, args) => {
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) {
+      console.error("OPENROUTER_API_KEY is missing");
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: "Error: AI service is not configured (missing API key)."
+      });
+      return;
+    }
+
+    const user: any = await ctx.runQuery(api.users.get, {});
+    if (!user) throw new Error("Unauthorized");
+
+    const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
+        userId: user._id,
+        action: "dailyReflection",
+        limit: OPENROUTER_RATE_LIMIT
+    });
+
+    if (!rateLimit.allowed) {
+        await ctx.runMutation(api.dailyChats.saveAIMessage, {
+            chatId: args.chatId,
+            content: "Rate limit exceeded for AI responses. Please try again tomorrow."
+        });
+        return;
+    }
+
+    // 1. Fetch the daily chat to get persona and entry
+    const chat: any = await ctx.runQuery(api.dailyChats.get, { chatId: args.chatId });
+    if (!chat) throw new Error("Daily chat not found");
+
+    // 2. Fetch the specific journal entry this chat is about
+    const entries: any[] = await ctx.runQuery(api.entries.list, {});
+    const entry = entries.find((e: any) => e._id === chat.entryId);
+    if (!entry) throw new Error("Entry not found");
+
+    // 3. Fetch User for Summary
+    const user: any = await ctx.runQuery(api.users.get, {});
+    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+
+    // 4. Fetch Chat History
+    const messages: any[] = await ctx.runQuery(api.dailyChats.listMessages, { chatId: args.chatId });
+
+    // 5. Construct System Prompt (focused on today's entry)
+    const personaPrompt = PERSONA_PROMPTS[chat.personaId] || "You are a wise and compassionate mentor.";
+    
+    const systemPrompt = `${personaPrompt}${userSummary}
+
+You are having a brief daily reflection conversation with the user about their journal entry from today.
+Keep your responses concise but insightful - this is a quick daily check-in, not a deep analysis session.
+Focus on what they wrote today and help them gain small insights about their thoughts and feelings.
+
+TODAY'S JOURNAL ENTRY:
+Title: ${entry.title || "Untitled"}
+Date: ${entry.date}
+Content: ${entry.content}`;
+
+    // 6. Construct Message History
+    const apiMessages = [
+      { role: "system", content: systemPrompt },
+      ...messages.map(m => ({
+        role: m.role,
+        content: m.content
+      }))
+    ];
+
+    // 7. Call OpenRouter
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "deepseek/deepseek-chat",
+          messages: apiMessages,
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const reply = data.choices[0]?.message?.content || "(No response)";
+
+      // 8. Save Reply
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: reply
+      });
+
+    } catch (error: any) {
+      console.error("Failed to generate daily reflection:", error);
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: "I apologize, but I am having trouble connecting right now. Please try again."
+      });
+    }
+  }
+});
+
+export const generateInitialReflection = action({
+  args: { chatId: v.id("dailyChats") },
+  handler: async (ctx, args) => {
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    if (!OPENROUTER_API_KEY) {
+      console.error("OPENROUTER_API_KEY is missing");
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: "Error: AI service is not configured (missing API key)."
+      });
+      return;
+    }
+
+    const user: any = await ctx.runQuery(api.users.get, {});
+    if (!user) throw new Error("Unauthorized");
+
+    const rateLimit: any = await ctx.runMutation(internal.rateLimits.checkAndIncrement, {
+        userId: user._id,
+        action: "initialReflection",
+        limit: OPENROUTER_RATE_LIMIT
+    });
+
+    if (!rateLimit.allowed) {
+        await ctx.runMutation(api.dailyChats.saveAIMessage, {
+            chatId: args.chatId,
+            content: "Rate limit reached for today. I'll be back tomorrow!"
+        });
+        return;
+    }
+
+    // 1. Fetch the daily chat to get persona and entry
+    const chat: any = await ctx.runQuery(api.dailyChats.get, { chatId: args.chatId });
+    if (!chat) throw new Error("Daily chat not found");
+
+    // 2. Fetch the specific journal entry
+    const entries: any[] = await ctx.runQuery(api.entries.list, {});
+    const entry = entries.find((e: any) => e._id === chat.entryId);
+    if (!entry) throw new Error("Entry not found");
+
+    // 3. Fetch User for Summary
+    const user: any = await ctx.runQuery(api.users.get, {});
+    const userSummary = user?.summary ? `\n\nUSER PROFILE / CONTEXT:\n${user.summary}` : "";
+
+    // 4. Construct System Prompt
+    const personaPrompt = PERSONA_PROMPTS[chat.personaId] || "You are a wise and compassionate mentor.";
+    
+    const prompt = `${personaPrompt}${userSummary}
+
+The user just finished writing their journal entry for today. Read it carefully and provide a brief, thoughtful opening reflection.
+This should be 2-3 sentences that acknowledge what they wrote and invite them to explore deeper if they wish.
+Be warm but not overwhelming - this is a daily check-in, not a therapy session.
+
+TODAY'S JOURNAL ENTRY:
+Title: ${entry.title || "Untitled"}
+Date: ${entry.date}
+Content: ${entry.content}
+
+Respond as if you are gently starting a conversation about what they wrote.`;
+
+    try {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "deepseek/deepseek-chat",
+          messages: [{ role: "user", content: prompt }],
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenRouter Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      const reply = data.choices[0]?.message?.content || "Thank you for sharing your thoughts today. Would you like to explore anything further?";
+
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: reply
+      });
+
+    } catch (error: any) {
+      console.error("Failed to generate initial reflection:", error);
+      await ctx.runMutation(api.dailyChats.saveAIMessage, {
+        chatId: args.chatId,
+        content: "Thank you for writing today. I'm here if you'd like to reflect on what you wrote."
+      });
     }
   }
 });

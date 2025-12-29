@@ -2,12 +2,13 @@
 
 import { Trash2 } from "lucide-react"
 import type { Entry } from "@/app/journal/page"
+import type { Id } from "@/convex/_generated/dataModel"
 
 interface EntryListProps {
   entries: Entry[]
   onSelect: (entry: Entry) => void
-  onDelete: (id: string) => void
-  selectedId?: string
+  onDelete: (id: Id<"entries">) => void
+  selectedId?: Id<"entries">
 }
 
 export function EntryList({ entries, onSelect, onDelete, selectedId }: EntryListProps) {

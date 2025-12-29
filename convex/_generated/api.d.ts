@@ -9,12 +9,15 @@
  */
 
 import type * as actions from "../actions.js";
+import type * as dailyChats from "../dailyChats.js";
 import type * as entries from "../entries.js";
 import type * as http from "../http.js";
 import type * as messages from "../messages.js";
 import type * as polar from "../polar.js";
+import type * as rateLimits from "../rateLimits.js";
 import type * as sessions from "../sessions.js";
 import type * as users from "../users.js";
+import type * as utils from "../utils.js";
 
 import type {
   ApiFromModules,
@@ -24,12 +27,15 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   actions: typeof actions;
+  dailyChats: typeof dailyChats;
   entries: typeof entries;
   http: typeof http;
   messages: typeof messages;
   polar: typeof polar;
+  rateLimits: typeof rateLimits;
   sessions: typeof sessions;
   users: typeof users;
+  utils: typeof utils;
 }>;
 
 /**

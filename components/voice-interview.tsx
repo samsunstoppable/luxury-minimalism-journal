@@ -24,7 +24,7 @@ const INTROSPECTION_QUESTIONS = [
 
 interface VoiceInterviewProps {
   persona: Persona
-  sessionId: string
+  sessionId: Id<"sessions">
   onComplete: () => void
   onCancel: () => void
 }
@@ -64,14 +64,14 @@ export function VoiceInterview({ persona, sessionId, onComplete, onCancel }: Voi
           const { storageId } = await result.json();
           
           const url = await saveAudio({ 
-            sessionId: sessionId as Id<"sessions">, 
+            sessionId, 
             storageId: storageId as Id<"_storage"> 
           });
           
           if (url) {
               const text = await transcribeAudio({ audioUrl: url });
               await appendTranscript({ 
-                sessionId: sessionId as Id<"sessions">, 
+                sessionId, 
                 text: `Q: ${questionText}\nA: ${text}` 
               });
           }

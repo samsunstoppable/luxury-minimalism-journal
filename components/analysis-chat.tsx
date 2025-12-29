@@ -10,13 +10,13 @@ import { Id } from "@/convex/_generated/dataModel"
 
 interface AnalysisChatProps {
   persona: Persona
-  sessionId: string
+  sessionId: Id<"sessions">
   onClose: () => void
 }
 
 export function AnalysisChat({ persona, sessionId, onClose }: AnalysisChatProps) {
-  const session = useQuery(api.sessions.get, { sessionId: sessionId as Id<"sessions"> });
-  const messages = useQuery(api.messages.list, { sessionId: sessionId as Id<"sessions"> }) || [];
+  const session = useQuery(api.sessions.get, { sessionId });
+  const messages = useQuery(api.messages.list, { sessionId }) || [];
   const sendMessage = useMutation(api.messages.send);
 
   const [inputValue, setInputValue] = useState("")
@@ -46,7 +46,7 @@ export function AnalysisChat({ persona, sessionId, onClose }: AnalysisChatProps)
     const content = inputValue
     setInputValue("")
 
-    await sendMessage({ sessionId: sessionId as Id<"sessions">, content, role: "user" })
+    await sendMessage({ sessionId, content, role: "user" })
     
     // Future: Trigger AI reply
   }

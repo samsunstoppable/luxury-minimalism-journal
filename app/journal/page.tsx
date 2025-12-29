@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, Suspense } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { JournalHeader } from "@/components/journal-header"
@@ -12,29 +12,50 @@ import { AnalysisUnlock } from "@/components/analysis-unlock"
 import { VoiceInterview } from "@/components/voice-interview"
 import { AnalysisChat } from "@/components/analysis-chat"
 import { SubscriptionPaywall } from "@/components/subscription-paywall"
+import { DailyMentorPrompt } from "@/components/daily-mentor-prompt"
+import { DailyMentorChat } from "@/components/daily-mentor-chat"
+import { OnboardingModal } from "@/components/onboarding-modal"
 import { isPremiumUser } from "@/lib/subscription"
 import type { Persona } from "@/components/persona-card"
+import type { Id } from "@/convex/_generated/dataModel"
 import Link from "next/link"
 import { User } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
 export interface Entry {
-  id: string
+  id: Id<"entries">
   title: string
   content: string
   date: Date
 }
 
 export default function JournalPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center font-serif text-muted-foreground">Loading...</div>}>
+      <JournalPageContent />
+    </Suspense>
+  )
+}
+
+function JournalPageContent() {
   // Convex Hooks
   const user = useQuery(api.users.get);
   const rawEntries = useQuery(api.entries.list);
   const createEntry = useMutation(api.entries.create);
   const updateEntry = useMutation(api.entries.update);
   const deleteEntry = useMutation(api.entries.remove);
+  const completeOnboarding = useMutation(api.users.completeOnboarding);
   
   // Session Hooks
   const createSession = useMutation(api.sessions.create);
   const analyzeSession = useAction(api.actions.analyzeSession);
+  
+  // Daily Mentor Hooks
+  const createDailyChat = useMutation(api.dailyChats.create);
+
+  const searchParams = useSearchParams()
+  const isPaymentSuccess = searchParams.get("payment") === "success"
 
   const entries: Entry[] = useMemo(() => {
     if (!rawEntries) return [];
@@ -50,20 +71,41 @@ export default function JournalPage() {
   const [isDailyMode, setIsDailyMode] = useState(true)
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [debugDays, setDebugDays] = useState(0); // For testing advancement
   
-  const realCycleDay = entries.length;
-  // Combine real entries + debug simulated days, capped at 7
-  const cycleDay = Math.min(realCycleDay + debugDays, 7);
+  const cycleDay = Math.min(entries.length, 7);
 
   const [isAnalysisMode, setIsAnalysisMode] = useState(false)
   const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null)
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<Id<"sessions"> | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isChatMode, setIsChatMode] = useState(false)
   const [showPaywall, setShowPaywall] = useState(false)
+  
+  // Daily Mentor State
+  const [showMentorPrompt, setShowMentorPrompt] = useState(false)
+  const [lastSavedEntryId, setLastSavedEntryId] = useState<Id<"entries"> | null>(null)
+  const [dailyChatId, setDailyChatId] = useState<Id<"dailyChats"> | null>(null)
+  const [dailyMentorPersona, setDailyMentorPersona] = useState<Persona | null>(null)
+  const [isDailyMentorMode, setIsDailyMentorMode] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
   const hasPremium = isPremiumUser(user?.subscriptionStatus)
+
+  useEffect(() => {
+    if (user && user.onboardingCompleted === false) {
+        setShowOnboarding(true)
+    }
+  }, [user])
+
+  useEffect(() => {
+    if (isPaymentSuccess && hasPremium) {
+      setIsAnalysisMode(true)
+      toast.success("Subscription activated! Welcome to the full experience.")
+      // Remove the query param to prevent re-triggering on refresh
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, "", newUrl)
+    }
+  }, [isPaymentSuccess, hasPremium])
 
   const handleNewEntry = () => {
     setSelectedEntry(null)
@@ -74,7 +116,6 @@ export default function JournalPage() {
 
   const handleSaveEntry = async (title: string, content: string) => {
     if (selectedEntry) {
-      // @ts-ignore
       await updateEntry({ id: selectedEntry.id, title, content });
     } else {
       const today = new Date().toISOString().split('T')[0];
@@ -94,13 +135,15 @@ export default function JournalPage() {
     const dateStr = today.toISOString().split('T')[0];
     const title = today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
     
-    await createEntry({
+    const entryId = await createEntry({
         title,
         content,
         date: dateStr,
         dayNumber: (entries.length % 7) + 1
     });
     setIsWriting(false);
+    setLastSavedEntryId(entryId);
+    setShowMentorPrompt(true);
   }
 
   const handleSelectEntry = (entry: Entry) => {
@@ -110,8 +153,7 @@ export default function JournalPage() {
     setMenuOpen(false)
   }
 
-  const handleDeleteEntry = async (id: string) => {
-    // @ts-ignore
+  const handleDeleteEntry = async (id: Id<"entries">) => {
     await deleteEntry({ id });
     if (selectedEntry?.id === id) {
       setSelectedEntry(null)
@@ -139,7 +181,6 @@ export default function JournalPage() {
     try {
       setSelectedPersona(persona);
       const sid = await createSession({ personaId: persona.id });
-      // @ts-ignore
       setSessionId(sid);
       
       setIsAnalysisMode(false);
@@ -152,9 +193,7 @@ export default function JournalPage() {
 
   const handleVoiceComplete = async () => {
     if (sessionId) {
-        // Trigger analysis in background
-        // @ts-ignore
-        analyzeSession({ sessionId }).catch(console.error);
+      analyzeSession({ sessionId }).catch(console.error);
     }
     setIsVoiceMode(false)
     setIsChatMode(true)
@@ -166,13 +205,39 @@ export default function JournalPage() {
     setSessionId(null)
   }
 
+  const handleStartDailyMentor = async (persona: Persona) => {
+    if (!lastSavedEntryId) return;
+    
+    try {
+      const chatId = await createDailyChat({ 
+        entryId: lastSavedEntryId, 
+        personaId: persona.id 
+      });
+      setDailyChatId(chatId);
+      setDailyMentorPersona(persona);
+      setShowMentorPrompt(false);
+      setIsDailyMentorMode(true);
+    } catch (error) {
+      console.error("Failed to start daily mentor chat:", error);
+    }
+  }
+
+  const handleCloseDailyMentor = () => {
+    setIsDailyMentorMode(false);
+    setDailyChatId(null);
+    setDailyMentorPersona(null);
+    setLastSavedEntryId(null);
+  }
+
+  if (isDailyMentorMode && dailyMentorPersona && dailyChatId) {
+    return <DailyMentorChat persona={dailyMentorPersona} chatId={dailyChatId} onClose={handleCloseDailyMentor} />
+  }
+
   if (isChatMode && selectedPersona && sessionId) {
-    // @ts-ignore
     return <AnalysisChat persona={selectedPersona} sessionId={sessionId} onClose={handleCloseChat} />
   }
 
   if (isVoiceMode && selectedPersona && sessionId) {
-    // @ts-ignore
     return <VoiceInterview persona={selectedPersona} sessionId={sessionId} onComplete={handleVoiceComplete} onCancel={handleCancel} />
   }
 
@@ -189,7 +254,6 @@ export default function JournalPage() {
           cycleDay={cycleDay}
           cycleTotalDays={7}
           onAnalyze={handleOpenAnalysis}
-          onDebugAdvance={() => setDebugDays(d => d + 1)}
           isPremium={hasPremium}
         />
         <SubscriptionPaywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
@@ -315,6 +379,23 @@ export default function JournalPage() {
       </div>
 
       <SubscriptionPaywall isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
+      <DailyMentorPrompt 
+        isOpen={showMentorPrompt} 
+        onClose={() => {
+          setShowMentorPrompt(false);
+          setLastSavedEntryId(null);
+        }} 
+        onStartChat={handleStartDailyMentor}
+        defaultPersonaId={user?.defaultPersonaId}
+      />
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+        onComplete={async () => {
+            await completeOnboarding();
+            setShowOnboarding(false);
+        }}
+      />
     </main>
   )
 }

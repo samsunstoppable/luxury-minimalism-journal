@@ -1,19 +1,44 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useAction } from "convex/react"
+import { useQuery, useAction, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import Link from "next/link"
-import { ArrowLeft, User, Sparkles, MessageSquare, Settings, Crown, Check, LogOut } from "lucide-react"
+import { ArrowLeft, User, Sparkles, MessageSquare, Settings, Crown, Check, LogOut, Download, Trash2, ShieldCheck, ExternalLink } from "lucide-react"
 import { isPremiumUser, SUBSCRIPTION_PRICE } from "@/lib/subscription"
 import { useClerk } from "@clerk/nextjs"
+import { toast } from "sonner"
+import { Footer } from "@/components/footer"
+import { Switch } from "@/components/ui/switch"
+import { useTheme } from "next-themes"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+const PERSONAS = [
+  { id: "jung", name: "Carl Jung" },
+  { id: "jesus", name: "Jesus" },
+  { id: "nietzsche", name: "Friedrich Nietzsche" },
+  { id: "seneca", name: "Seneca" },
+  { id: "buddha", name: "Buddha" },
+  { id: "socrates", name: "Socrates" },
+  { id: "aurelius", name: "Marcus Aurelius" },
+  { id: "lao-tzu", name: "Lao Tzu" },
+  { id: "rumi", name: "Rumi" },
+  { id: "freud", name: "Sigmund Freud" },
+]
 
 export default function ProfilePage() {
   const user = useQuery(api.users.get);
   const sessions = useQuery(api.sessions.list);
   const createCheckout = useAction(api.polar.createCheckout);
+  const exportData = useAction(api.users.exportData);
+  const deleteAccount = useMutation(api.users.deleteAccount);
+  const updatePersona = useMutation(api.users.updateDefaultPersona);
+  const updateNotifications = useMutation(api.users.updateNotificationSettings);
   const { signOut } = useClerk();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const hasPremium = isPremiumUser(user?.subscriptionStatus);
 
@@ -30,8 +55,48 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error("Checkout error:", error);
+      toast.error("Failed to start checkout.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const data = await exportData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `journal-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Data export started.");
+    } catch (error) {
+      console.error("Export error:", error);
+      toast.error("Failed to export data.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm("Are you absolutely sure? This will permanently delete your account and all your journal entries. This action cannot be undone.")) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      toast.success("Account deleted successfully.");
+      signOut({ redirectUrl: "/" });
+    } catch (error) {
+      console.error("Delete error:", error);
+      toast.error("Failed to delete account.");
+      setIsDeleting(false);
     }
   };
 
@@ -184,22 +249,119 @@ export default function ProfilePage() {
             </div>
         </section>
 
-        {/* Settings Placeholder */}
-        <section className="space-y-6 opacity-50 pointer-events-none filter blur-[1px]">
+        {/* Settings */}
+        <section className="space-y-6">
             <div className="flex items-center gap-2 text-foreground/80">
                 <Settings size={18} />
                 <h3 className="font-serif text-lg tracking-wide">Settings</h3>
             </div>
-            <div className="bg-card border border-border p-6 rounded-sm space-y-4">
+            <div className="bg-card border border-border p-6 rounded-sm space-y-6">
                  <div className="flex justify-between items-center">
-                    <span className="font-sans text-sm">Dark Mode</span>
-                    <div className="w-10 h-6 bg-border rounded-full relative"><div className="w-4 h-4 bg-background rounded-full absolute top-1 left-1"/></div>
+                    <div className="space-y-1">
+                        <p className="font-sans text-sm font-medium">Dark Mode</p>
+                        <p className="font-sans text-xs text-muted-foreground">Adjust the interface to your preference.</p>
+                    </div>
+                    <Switch 
+                        checked={theme === 'dark'} 
+                        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} 
+                    />
                  </div>
+                 
                  <div className="h-px bg-border/50" />
+                 
                  <div className="flex justify-between items-center">
-                    <span className="font-sans text-sm">Notifications</span>
-                    <div className="w-10 h-6 bg-foreground rounded-full relative"><div className="w-4 h-4 bg-background rounded-full absolute top-1 right-1"/></div>
+                    <div className="space-y-1">
+                        <p className="font-sans text-sm font-medium">Email Notifications</p>
+                        <p className="font-sans text-xs text-muted-foreground">Receive daily reminders and cycle updates.</p>
+                    </div>
+                    <Switch 
+                        checked={user?.notificationsEnabled ?? true} 
+                        onCheckedChange={(checked) => updateNotifications({ enabled: checked })} 
+                    />
                  </div>
+
+                 <div className="h-px bg-border/50" />
+
+                 <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                        <p className="font-sans text-sm font-medium">Default Mentor</p>
+                        <p className="font-sans text-xs text-muted-foreground">Your preferred guide for daily reflections.</p>
+                    </div>
+                    <Select 
+                        value={user?.defaultPersonaId || "jung"} 
+                        onValueChange={(value) => updatePersona({ personaId: value })}
+                    >
+                        <SelectTrigger className="w-[180px] bg-background">
+                            <SelectValue placeholder="Select a mentor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {PERSONAS.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 </div>
+
+                 {hasPremium && (
+                    <>
+                        <div className="h-px bg-border/50" />
+                        <div className="flex justify-between items-center">
+                            <div className="space-y-1">
+                                <p className="font-sans text-sm font-medium">Subscription</p>
+                                <p className="font-sans text-xs text-muted-foreground">Manage your billing and plan details.</p>
+                            </div>
+                            <Link 
+                                href="https://polar.sh/dashboard" 
+                                target="_blank"
+                                className="flex items-center gap-2 px-4 py-2 border border-border rounded-sm font-sans text-xs tracking-widest uppercase hover:bg-foreground hover:text-background transition-all"
+                            >
+                                <ExternalLink size={12} />
+                                Manage
+                            </Link>
+                        </div>
+                    </>
+                 )}
+            </div>
+        </section>
+
+        {/* Privacy & Data */}
+        <section className="space-y-6">
+            <div className="flex items-center gap-2 text-foreground/80">
+                <ShieldCheck size={18} />
+                <h3 className="font-serif text-lg tracking-wide">Privacy & Data</h3>
+            </div>
+            <div className="bg-card border border-border p-6 rounded-sm space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="font-serif text-base">Export Your Data</p>
+                        <p className="font-sans text-xs text-muted-foreground">Download all your journal entries and chat history in JSON format.</p>
+                    </div>
+                    <button
+                        onClick={handleExportData}
+                        disabled={isExporting}
+                        className="flex items-center justify-center gap-2 px-6 py-2 border border-border rounded-sm font-sans text-xs tracking-widest uppercase hover:bg-foreground hover:text-background transition-all disabled:opacity-50"
+                    >
+                        <Download size={14} />
+                        {isExporting ? "Exporting..." : "Export JSON"}
+                    </button>
+                </div>
+                
+                <div className="h-px bg-border/50" />
+                
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="font-serif text-base text-red-600">Delete Account</p>
+                        <p className="font-sans text-xs text-muted-foreground">Permanently remove your account and all associated data. This cannot be undone.</p>
+                    </div>
+                    <button
+                        onClick={handleDeleteAccount}
+                        disabled={isDeleting}
+                        className="flex items-center justify-center gap-2 px-6 py-2 border border-red-200 text-red-600 rounded-sm font-sans text-xs tracking-widest uppercase hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                    >
+                        <Trash2 size={14} />
+                        {isDeleting ? "Deleting..." : "Delete All Data"}
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -215,6 +377,7 @@ export default function ProfilePage() {
         </section>
 
       </div>
+      <Footer />
     </main>
   )
 }

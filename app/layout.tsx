@@ -15,6 +15,9 @@ const inter = Inter({
 })
 
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { Toaster } from "sonner"
+import { CookieBanner } from "@/components/cookie-banner"
+import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata: Metadata = {
   title: "Journal — A Space for Your Thoughts",
@@ -32,12 +35,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <ConvexClientProvider>
-          {children}
-        </ConvexClientProvider>
-        <Analytics />
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ConvexClientProvider>
+            {children}
+          </ConvexClientProvider>
+          <Toaster position="bottom-center" />
+          <CookieBanner />
+          <Analytics />
+        </ThemeProvider>
       </body>
     </html>
   )

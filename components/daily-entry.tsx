@@ -12,7 +12,6 @@ interface DailyEntryProps {
   cycleDay?: number
   cycleTotalDays?: number
   onAnalyze?: () => void
-  onDebugAdvance?: () => void
   isPremium?: boolean
 }
 
@@ -23,7 +22,6 @@ export function DailyEntry({
   cycleDay = 4,
   cycleTotalDays = 7,
   onAnalyze,
-  onDebugAdvance,
   isPremium = false,
 }: DailyEntryProps) {
   const [content, setContent] = useState(initialContent)
@@ -83,14 +81,7 @@ export function DailyEntry({
                 Back
               </button>
               <h1 className="font-serif text-base md:text-lg text-foreground tracking-wide">{formattedDate}</h1>
-              <div className="flex items-center gap-3">
-                <ProgressRing currentDay={cycleDay} totalDays={cycleTotalDays} />
-                {onDebugAdvance && (
-                    <button onClick={onDebugAdvance} className="text-muted-foreground/20 hover:text-foreground text-[10px] uppercase font-sans tracking-widest border border-border px-2 py-1 rounded-sm">
-                        +1 Day
-                    </button>
-                )}
-              </div>
+              <ProgressRing currentDay={cycleDay} totalDays={cycleTotalDays} />
             </div>
           </div>
           <div className="h-px bg-border/50" />

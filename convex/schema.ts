@@ -9,6 +9,9 @@ export default defineSchema({
     subscriptionStatus: v.optional(v.string()), // "free", "active", "past_due"
     subscriptionId: v.optional(v.string()), // Polar subscription ID
     summary: v.optional(v.string()), // AI-generated summary of the user
+    defaultPersonaId: v.optional(v.string()), // Default mentor persona for daily chats
+    notificationsEnabled: v.optional(v.boolean()),
+    onboardingCompleted: v.optional(v.boolean()),
   }).index("by_token", ["tokenIdentifier"]),
 
   entries: defineTable({
@@ -40,4 +43,26 @@ export default defineSchema({
     content: v.string(),
     timestamp: v.number(),
   }).index("by_session", ["sessionId"]),
+
+  dailyChats: defineTable({
+    userId: v.id("users"),
+    entryId: v.id("entries"), // Links to the specific journal entry
+    personaId: v.string(), // "jung", "seneca", etc.
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_entry", ["entryId"]),
+
+  dailyChatMessages: defineTable({
+    chatId: v.id("dailyChats"),
+    role: v.string(), // "user" or "assistant"
+    content: v.string(),
+    timestamp: v.number(),
+  }).index("by_chat", ["chatId"]),
+
+  rateLimits: defineTable({
+    key: v.string(), // userId_action_date
+    count: v.number(),
+    lastReset: v.number(),
+  }).index("by_key", ["key"]),
 });

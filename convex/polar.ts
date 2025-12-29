@@ -7,6 +7,7 @@ import { validateEvent } from "@polar-sh/sdk/webhooks";
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN ?? "",
+  server: (process.env.POLAR_ENV as "sandbox" | "production") ?? "production",
 });
 
 export const createCheckout = action({
@@ -14,6 +15,10 @@ export const createCheckout = action({
     priceId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!process.env.POLAR_ACCESS_TOKEN) {
+      throw new Error("POLAR_ACCESS_TOKEN is missing in environment variables");
+    }
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("Unauthorized");
@@ -32,7 +37,7 @@ export const createCheckout = action({
 
     const checkout = await polar.checkouts.create({
       products: [priceId],
-      successUrl: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}?payment=success`,
+      successUrl: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/journal?payment=success`,
       metadata: {
         userId: user._id,
       },
